@@ -1,0 +1,12 @@
+model Comment {
+    id        Int      @id @default(autoincrement())
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    content String
+
+    createdBy   Person @relation("comment_created_by", fields: [createdById], references: [id], onDelete: Cascade)
+    createdById Int
+
+    @@map("comment")
+}

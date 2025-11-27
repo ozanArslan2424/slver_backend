@@ -1,0 +1,29 @@
+model User {
+    id        String   @id @default(uuid())
+    createdAt DateTime @default(now())
+    updatedAt DateTime @default(now()) @updatedAt
+
+    email         String  @unique
+    emailVerified Boolean @default(false)
+    password      String
+
+    profile       Person?        @relation("user_person")
+    verifications Verification[] @relation("user_verification")
+
+    @@map("user")
+}
+
+model Verification {
+    id        Int      @id @default(autoincrement())
+    createdAt DateTime @default(now())
+    updatedAt DateTime @default(now()) @updatedAt
+
+    variant   String
+    value     String
+    expiresAt DateTime
+
+    userId String
+    user   User   @relation("user_verification", fields: [userId], references: [id])
+
+    @@map("verification")
+}

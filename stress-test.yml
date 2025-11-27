@@ -1,0 +1,68 @@
+config:
+  target: "http://localhost:3000"
+  phases:
+    # Test 1: Just under the limit (should succeed)
+    - duration: 60
+      arrivalRate: 1 # 60 requests total - should all succeed
+      name: "Under limit test"
+
+    # Test 2: Just over the limit (should see 429s)
+    - duration: 60
+      arrivalRate: 2 # 120 requests total - ~60 should get 429
+      name: "Over limit test"
+
+    # Test 3: Burst test (rapid requests)
+    - duration: 10
+      arrivalRate: 20 # 200 requests in 10 seconds - most should get 429
+      name: "Burst test"
+  http:
+    timeout: 3
+    maxSockets: 100
+
+scenarios:
+  - name: "Unauthorized requests (IP-based rate limiting)"
+    flow:
+      - get:
+          url: "/api/health"
+          capture:
+            - header: "ratelimit"
+              as: "rate_limit_header"
+            - header: "set-cookie"
+              as: "set_cookie"
+          expect:
+            - statusCode: 200
+
+  - name: "Authenticated requests (Token-based rate limiting)"
+    weight: 2
+    flow:
+      - post:
+          url: "/api/auth/login"
+          json:
+            email: "testaccount@test.com"
+            password: "123456789"
+          capture:
+            - json: "$.accessToken"
+              as: "auth_token"
+          expect:
+            - statusCode: 200
+      - think: 0.5
+      - get:
+          url: "/api/thing"
+          headers:
+            Authorization: "Bearer {{ auth_token }}"
+          capture:
+            - header: "ratelimit"
+              as: "rate_limit_header"
+
+  - name: "Cookie-based requests"
+    flow:
+      - get:
+          url: "/api/health"
+          capture:
+            - header: "set-cookie"
+              as: "rl_cookie"
+      - think: 1
+      - get:
+          url: "/api/health"
+          headers:
+            Cookie: "{{ rl_cookie }}"

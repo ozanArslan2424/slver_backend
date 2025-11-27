@@ -1,0 +1,19 @@
+model Attachment {
+    id        Int            @id @default(autoincrement())
+    createdAt DateTime       @default(now())
+    updatedAt DateTime       @updatedAt
+    type      AttachmentType
+    url       String
+    size      Float
+
+    createdById Int
+    createdBy   Person @relation("attachment_created_by", fields: [createdById], references: [id], onDelete: Cascade)
+    thingId     Int
+    thing       Thing  @relation("thing_attachments", fields: [thingId], references: [id], onDelete: Cascade)
+}
+
+enum AttachmentType {
+    image
+    document
+    other
+}

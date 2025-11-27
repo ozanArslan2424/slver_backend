@@ -1,0 +1,13 @@
+{{appName}}
+
+{{title}}
+
+{{description}}
+
+{{otpTitle}} {{otpCode}}
+
+{{otpExpire}}
+
+{{notMe}}
+
+© 2025 {{appName}}. {{rights}}

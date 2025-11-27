@@ -1,0 +1,12 @@
+model Group {
+    id        Int      @id @default(autoincrement())
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    title String
+
+    memberships Membership[] @relation("group_membership")
+    things      Thing[]      @relation("thing_group")
+
+    @@map("group")
+}

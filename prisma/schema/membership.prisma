@@ -1,0 +1,13 @@
+model Membership {
+    role     PersonRole
+    status   Status
+    password String
+
+    personId Int
+    person   Person @relation("person_membership", fields: [personId], references: [id])
+    groupId  Int
+    group    Group  @relation("group_membership", fields: [groupId], references: [id])
+
+    @@unique([personId, groupId])
+    @@map("membership")
+}

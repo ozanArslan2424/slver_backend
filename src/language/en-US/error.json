@@ -1,0 +1,40 @@
+{
+	"unprocessable": {
+		"body": "Invalid body",
+		"searchParams": "Invalid search params",
+		"params": "Invalid params"
+	},
+	"unknown": "Unknown error",
+	"auth": {
+		"invalid": "Invalid credentials",
+		"registerExists": "This email is already registered"
+	},
+	"group": {
+		"idNotFound": "Group ID could not be found",
+		"notFound": "Group not found",
+		"invalidPassword": "Invalid group password",
+		"notMember": "You are not a member of this group",
+		"notAdmin": "Only admins/owners can perform this action",
+		"inviteAccepted": "This person is already a member.",
+		"inviteRejected": "This person was removed from this group.",
+		"invitePending": "The invitation is already sent."
+	},
+	"person": {
+		"notFound": "Person not found"
+	},
+	"prisma": {
+		"unknown": "Unknown database error occurred",
+		"connection": "Database connection failed",
+		"validation": "Invalid query parameters",
+		"rustPanic": "Database system error",
+		"P2000": "Input value too long",
+		"P2001": "Record not found",
+		"P2002": "Unique constraint violation",
+		"P2003": "Foreign key constraint failed",
+		"P2004": "Constraint violation",
+		"P2005": "Invalid value stored in database",
+		"P2006": "Invalid value provided",
+		"P2007": "Data validation error",
+		"P2014": "Invalid ID provided"
+	}
+}

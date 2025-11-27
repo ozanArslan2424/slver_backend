@@ -1,0 +1,29 @@
+generator client {
+    output     = "../generated"
+    provider   = "prisma-client"
+    engineType = "client"
+    runtime    = "bun"
+}
+
+datasource db {
+    provider = "postgresql"
+}
+
+enum Priority {
+    low
+    medium
+    high
+    extreme
+}
+
+enum PersonRole {
+    super_admin
+    admin
+    user
+}
+
+enum Status {
+    pending
+    accepted
+    rejected
+}

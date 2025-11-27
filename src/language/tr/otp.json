@@ -1,0 +1,9 @@
+{
+	"subject": "{{appName}} grup daveti",
+	"title": "Bir gruba davet edildin!",
+	"description": "{{invitedByName}} tarafından {{groupName}} grubuna davet edildiniz.",
+	"otpTitle": "Aşağıdaki tek seferlik kodu kullanarak katılabilirsiniz:",
+	"otpExpire": "Bu kod 24 saat sonra geçersiz olacaktır.",
+	"notMe": "Böyle bir davet beklemiyorsanız bu e-postayı güvenle yoksayabilirsiniz.",
+	"rights": "Bütün hakları saklıdır."
+}
