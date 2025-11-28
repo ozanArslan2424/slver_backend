@@ -1,10 +1,10 @@
 import type { Translator, TranslatorOptions } from "@/language/language.schema";
 import { Core } from "@/lib/core.namespace";
 import tr from "./tr";
-import enUS from "./en-US";
+import en from "./en";
 
 export class LanguageService extends Core.Service {
-	storedLanguage: string = "en-US";
+	storedLanguage: string = "en";
 	readonly langHeader = "x-lang";
 
 	constructor() {
@@ -12,7 +12,9 @@ export class LanguageService extends Core.Service {
 	}
 
 	readonly locales: Record<string, any> = {
-		"en-US": enUS,
+		"en-US": en,
+		"en-UK": en,
+		en,
 		tr: tr,
 	};
 
@@ -32,7 +34,8 @@ export class LanguageService extends Core.Service {
 	private async getTranslationFile(lang: string, collection: string) {
 		// const address = path.join(__dirname, lang, `${collection}.json`);
 		// return await Read.jsonFile(address);
-		return this.locales[lang][collection];
+		const locale = this.locales[lang] ?? this.locales["en"];
+		return locale[collection];
 	}
 
 	private getTranslation(translations: any, key: string, variables: Record<string, string> = {}) {

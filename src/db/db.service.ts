@@ -1,5 +1,6 @@
 import { Adapter } from "@/lib/adapter.namespace";
 import { Config } from "@/lib/config.namespace";
+import { Help } from "@/lib/help.namespace";
 import type { LoggerService } from "@/logger/logger.service";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "prisma/generated/client";
@@ -12,8 +13,31 @@ export class DBService extends PrismaClient implements Adapter.DBClientInterface
 	}
 
 	async connect(): Promise<void> {
-		await this.$connect();
-		this.loggerService.log("✅ DB Client Connected");
+		const maxAttempts = 3;
+		const baseDelay = Help.milliseconds["1s"];
+
+		for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+			try {
+				await this.$connect();
+				this.loggerService.log("✅ DB Client Connected");
+				return;
+			} catch (err) {
+				const error = err as Error;
+				this.loggerService.warn(
+					`❌ DB Connection attempt ${attempt}/${maxAttempts} failed: ${error.message}`,
+				);
+
+				if (attempt === maxAttempts) {
+					throw new Error(
+						`Failed to connect to database after ${maxAttempts} attempts: ${error.message}`,
+					);
+				}
+
+				const delay = baseDelay * Math.pow(2, attempt - 1);
+				this.loggerService.log(`Retrying in ${delay}ms...`);
+				await new Promise((resolve) => setTimeout(resolve, delay));
+			}
+		}
 	}
 
 	async disconnect(): Promise<void> {

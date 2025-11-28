@@ -77,15 +77,7 @@ export namespace Help {
 		"1m": 60 * 1000, // 1 minute
 		"30s": 30 * 1000, // 30 seconds
 		"15s": 15 * 1000, // 15 seconds
-	};
-
-	export const seconds = {
-		"10m": 10 * 60, // 10 minutes
-		"5m": 5 * 60, // 5 minutes
-		"1m": 60, // 1 minute
-		"10s": 10, // 10 seconds
-		"5s": 5, // 5 seconds
-		"1s": 1, // 1 second
+		"1s": 1000, // 1 second
 	};
 
 	export function assert<T>(condition: T | null | undefined, message?: string): asserts condition {
