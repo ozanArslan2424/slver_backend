@@ -10,7 +10,7 @@ export class RateLimitService extends Core.Service {
 	readonly rlWindow = 60_000; // 1 minute
 	readonly rlMax = 60; // 1 per minute
 	readonly rlSaltRotate = 24 * 3600 * 1000; // daily
-	readonly rateLimitHeader = "RateLimit";
+	readonly rateLimitHeader = "x-rl";
 
 	private readonly store = new Map<string, RateLimitEntry>();
 	private storedSalt: string;

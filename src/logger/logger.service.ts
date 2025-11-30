@@ -76,7 +76,7 @@ export class LoggerService extends Core.Service implements Adapter.Logger {
 					winston.format.colorize(),
 					winston.format.printf(
 						({ timestamp, level, message, stack, ...meta }) =>
-							`${timestamp} [${level}]: ${message}${Object.keys(meta).length > 0 ? `\n${JSON.stringify(meta, null, 2)}` : ""}${stack ? `\n${stack}` : ""}`,
+							`${timestamp} [${level}]: ${message}${Object.keys(meta).length > 0 ? `\n${JSON.stringify(meta, null, 2)}` : ""}${stack ? `\n${JSON.stringify(stack, null, 2)}` : ""}`,
 					),
 				)
 			: winston.format.combine(

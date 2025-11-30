@@ -1,7 +1,10 @@
 {
 	"compilerOptions": {
 		// Environment setup & latest features
-		"lib": ["ESNext", "DOM"],
+		"lib": [
+			"ESNext",
+			"DOM"
+		],
 		"target": "ESNext",
 		"module": "Preserve",
 		"moduleDetection": "force",
@@ -21,7 +24,9 @@
 		"noImplicitOverride": true,
 		"baseUrl": ".",
 		"paths": {
-			"@/*": ["./src/*"]
+			"@/*": [
+				"./src/*"
+			]
 		},
 		// Some stricter flags (disabled by default)
 		"noUnusedLocals": false,
@@ -29,5 +34,8 @@
 		"noPropertyAccessFromIndexSignature": false,
 		"esModuleInterop": true
 	},
-	"exclude": ["dist", "node_modules"]
+	"exclude": [
+		"dist",
+		"node_modules"
+	]
 }

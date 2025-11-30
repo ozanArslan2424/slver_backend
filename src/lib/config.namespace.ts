@@ -22,7 +22,6 @@ declare module "bun" {
 
 export namespace Config {
 	export const env = Bun.env;
-	export const cwd = process.cwd;
 	export const pkg = pkgJson;
 
 	type Env = Adapter.Env;

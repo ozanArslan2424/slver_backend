@@ -39,9 +39,18 @@ async function main() {
 	const rateLimitMiddleware = new Core.Middleware((c) => rateLimitService.middleware(c));
 
 	const cors = new Core.Cors({
-		origin: [Config.get("CLIENT_URL")],
-		methods: ["GET", "POST"],
-		allowedHeaders: ["Content-Type", "Authorization", "x-group-id", "x-lang", "RateLimit"],
+		allowedOrigins: [
+			Config.get("CLIENT_URL"),
+			...(Config.isDev() ? ["http://192.168.1.5:5173"] : []),
+		],
+		allowedMethods: ["GET", "POST"],
+		allowedHeaders: [
+			"Content-Type",
+			"Authorization",
+			groupService.groupIdHeader,
+			languageService.langHeader,
+			rateLimitService.rateLimitHeader,
+		],
 		credentials: true,
 	});
 

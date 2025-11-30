@@ -5,12 +5,11 @@ import type {
 	ThingAssignData,
 	ThingDoneData,
 	ThingRemoveData,
-	ThingData,
 } from "@/thing/thing.schema";
 import { Core } from "@/lib/core.namespace";
 import type { DBService } from "@/db/db.service";
 import type { AuthService } from "@/auth/auth.service";
-import type { Prisma, Thing } from "prisma/generated/client";
+import type { Prisma } from "prisma/generated/client";
 import { Status } from "prisma/generated/enums";
 
 export class ThingService extends Core.Service {
@@ -32,6 +31,7 @@ export class ThingService extends Core.Service {
 				content: body.content,
 				dueDate: body.dueDate,
 				groupId: isMember ? membership.groupId : undefined,
+				assignedToId: isMember ? undefined : profile.id,
 			},
 			include: { assignedTo: true },
 		});

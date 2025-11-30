@@ -276,8 +276,8 @@ export namespace Core {
 	}
 
 	export type CorsConfig = {
-		origin?: string[];
-		methods?: string[];
+		allowedOrigins?: string[];
+		allowedMethods?: string[];
 		allowedHeaders?: HeaderKey[];
 		credentials?: boolean;
 	};
@@ -293,16 +293,18 @@ export namespace Core {
 		private readonly headersKey = "Access-Control-Allow-Headers";
 		private readonly credentialsKey = "Access-Control-Allow-Credentials";
 
-		public getCorsHeaders(existingHeaders: Headers) {
-			const headers = new Headers(existingHeaders);
-			const { origin, methods, allowedHeaders, credentials } = this.config;
+		public getCorsHeaders(req: Req, res: Res) {
+			const reqOrigin = req.headers.get("origin") ?? "";
+			const headers = new Headers(res.headers);
 
-			if (Help.isSomeArray(origin)) {
-				headers.set(this.originKey, origin.join(", "));
+			const { allowedOrigins, allowedMethods, allowedHeaders, credentials } = this.config;
+
+			if (Help.isSomeArray(allowedOrigins) && allowedOrigins.includes(reqOrigin)) {
+				headers.set(this.originKey, reqOrigin);
 			}
 
-			if (Help.isSomeArray(methods)) {
-				headers.set(this.methodsKey, methods.join(", "));
+			if (Help.isSomeArray(allowedMethods)) {
+				headers.set(this.methodsKey, allowedMethods.join(", "));
 			}
 
 			if (Help.isSomeArray(allowedHeaders)) {
@@ -684,9 +686,7 @@ export namespace Core {
 			}
 		}
 
-		public async handleFetch(request: Adapter.Req): Promise<Res> {
-			const req = new Req(request);
-
+		public async handleFetch(req: Req): Promise<Res> {
 			try {
 				if (req.method === Method.OPTIONS && req.headers.get("access-control-request-method")) {
 					return new Res("Departed");
@@ -788,10 +788,11 @@ export namespace Core {
 
 				return Adapter.serve({
 					port,
-					fetch: async (req) => {
+					fetch: async (request) => {
+						const req = new Req(request);
 						const res = await this.router.handleFetch(req);
 						if (this.cors !== undefined) {
-							const headers = this.cors.getCorsHeaders(res.headers);
+							const headers = this.cors.getCorsHeaders(req, res);
 							res.headers.innerCombine(headers);
 						}
 						return res.response;

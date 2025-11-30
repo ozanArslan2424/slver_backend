@@ -10,7 +10,7 @@ export class AuthService extends Core.Service {
 	readonly jwtRefreshSecret = Config.get("JWT_REFRESH_SECRET");
 	readonly jwtAccessSecret = Config.get("JWT_ACCESS_SECRET");
 	readonly authHeader = "authorization";
-	readonly authCookie = "auth";
+	readonly authCookie = "arc";
 
 	constructor(
 		private readonly db: DBService,
@@ -30,11 +30,13 @@ export class AuthService extends Core.Service {
 			select: { emailVerified: true },
 		});
 		if (!user) {
-			throw new Core.Err("UNAUTHORIZED5", 401);
+			console.log("!user");
+			throw new Core.Err("UNAUTHORIZED", Core.Status.UNAUTHORIZED);
 		}
 		const profile = await this.personService.getByUserId(payload.userId);
 		if (!profile) {
-			throw new Core.Err("UNAUTHORIZED6", 401);
+			console.log("!profile");
+			throw new Core.Err("UNAUTHORIZED", Core.Status.UNAUTHORIZED);
 		}
 		return { ...profile, emailVerified: user.emailVerified };
 	}
@@ -43,12 +45,16 @@ export class AuthService extends Core.Service {
 		const user = await this.db.user.findUnique({
 			where: { email: body.email },
 		});
-		if (!user) throw new Core.Err("auth.invalid", 400);
+		if (!user) {
+			throw new Core.Err("auth.invalid", Core.Status.BAD_REQUEST);
+		}
 		const pwdMatch = await Encrypt.verifyPassword(body.password, user.password);
-		if (!pwdMatch) throw new Core.Err("auth.invalid", 400);
+		if (!pwdMatch) {
+			throw new Core.Err("auth.invalid", Core.Status.BAD_REQUEST);
+		}
 		const profile = await this.personService.getByUserId(user.id);
 		if (!profile) {
-			throw new Core.Err("UNAUTHORIZED7", 401);
+			throw new Core.Err("auth.invalid", Core.Status.BAD_REQUEST);
 		}
 		const refreshToken = this.signRefreshToken(profile.userId);
 		this.setRefreshCookie(cookies, refreshToken);
@@ -62,7 +68,7 @@ export class AuthService extends Core.Service {
 			where: { email: body.email },
 		});
 		if (exists) {
-			throw new Core.Err("auth.registerExists", 400);
+			throw new Core.Err("auth.registerExists", Core.Status.BAD_REQUEST);
 		}
 		const oneHourFromNow = new Date(Date.now() + 60 * 60 * 1000);
 		const otp = Help.generateOTP();
@@ -123,10 +129,13 @@ export class AuthService extends Core.Service {
 	}
 
 	getRefreshPayload(req: Core.Req): Encrypt.JwtPayload {
-		const token = req.cookies.getValue(this.authCookie);
-		if (!token) throw new Core.Err("UNAUTHORIZED", Core.Status.UNAUTHORIZED);
+		const refreshToken = req.cookies.getValue(this.authCookie);
+		if (!refreshToken) {
+			console.log("!refreshToken");
+			throw new Core.Err("UNAUTHORIZED", Core.Status.UNAUTHORIZED);
+		}
 		try {
-			return Encrypt.verifyJwt(token, this.jwtRefreshSecret) as Encrypt.JwtPayload;
+			return Encrypt.verifyJwt(refreshToken, this.jwtRefreshSecret) as Encrypt.JwtPayload;
 		} catch {
 			throw new Core.Err("Invalid refresh token", Core.Status.BAD_REQUEST);
 		}
@@ -147,7 +156,10 @@ export class AuthService extends Core.Service {
 
 	getAccessPayload(headers: Core.Headers): Encrypt.JwtPayload {
 		const token = this.getAccessToken(headers);
-		if (!token) throw new Core.Err("UNAUTHORIZED", Core.Status.UNAUTHORIZED);
+		if (!token) {
+			console.log("!token");
+			throw new Core.Err("UNAUTHORIZED", Core.Status.UNAUTHORIZED);
+		}
 		try {
 			return Encrypt.verifyJwt(token, this.jwtAccessSecret) as Encrypt.JwtPayload;
 		} catch {
