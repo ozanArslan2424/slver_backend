@@ -14,6 +14,7 @@ import type { DBService } from "@/db/db.service";
 import { Encrypt } from "@/lib/encrypt.namespace";
 import type { AuthService } from "@/auth/auth.service";
 import type { Membership } from "prisma/generated/client";
+import type { TransactionClient } from "@/db/db.schema";
 
 export class GroupService extends Core.Service {
 	readonly groupIdHeader = "x-group-id";
@@ -44,10 +45,11 @@ export class GroupService extends Core.Service {
 		return this.groupId;
 	}
 
-	async getMembership(profile: PersonData): Promise<Membership | null> {
+	async getMembership(profile: PersonData, tx?: TransactionClient): Promise<Membership | null> {
+		const client = tx ?? this.db;
 		const groupId = this.getGroupId();
 		if (!groupId) return null;
-		return await this.db.membership.findUnique({
+		return await client.membership.findUnique({
 			where: {
 				personId_groupId: { personId: profile.id, groupId },
 				status: Status.accepted,

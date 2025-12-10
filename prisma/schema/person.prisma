@@ -13,6 +13,7 @@ model Person {
     createdThings      Thing[]      @relation("thing_created_by")
     createdComments    Comment[]    @relation("comment_created_by")
     createdAttachments Attachment[] @relation("attachment_created_by")
+    seenStatuses       SeenStatus[] @relation("person_seen_status")
 
     userId String @unique
     user   User   @relation("user_person", fields: [userId], references: [id], onDelete: Cascade)

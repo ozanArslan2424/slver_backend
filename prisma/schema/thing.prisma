@@ -8,7 +8,8 @@ model Thing {
     doneDate DateTime?
     dueDate  DateTime?
 
-    attachments Attachment[] @relation("thing_attachments")
+    attachments  Attachment[] @relation("thing_attachments")
+    seenStatuses SeenStatus[] @relation("thing_seen_status")
 
     assignedToId Int?
     assignedTo   Person? @relation("thing_assigned_to", fields: [assignedToId], references: [id], onDelete: SetNull)

@@ -1,0 +1,12 @@
+model SeenStatus {
+    personId Int
+    person   Person @relation("person_seen_status", fields: [personId], references: [id])
+
+    thingId Int
+    thing   Thing @relation("thing_seen_status", fields: [thingId], references: [id])
+
+    isSeen Boolean @default(false)
+
+    @@unique([personId, thingId])
+    @@map("seen_status")
+}

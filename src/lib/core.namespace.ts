@@ -328,11 +328,11 @@ export namespace Core {
 	}
 
 	export class Service {
-		makeMiddlewareHandler<D = void>(callback: MiddlewareCallback<D>) {
+		protected makeMiddlewareHandler<D = void>(callback: MiddlewareCallback<D>) {
 			return callback;
 		}
 
-		makeRouteHandler<
+		protected makeRouteHandler<
 			D = void,
 			R extends unknown = unknown,
 			B extends unknown = unknown,
@@ -601,13 +601,22 @@ export namespace Core {
 	}
 
 	type MiddlewareCallback<D = void> = (context: RouteContext) => Promise<D> | D;
+	type MiddlewareProvider<D = void> = {
+		middleware: MiddlewareCallback<D>;
+	};
 
 	/**
 	 * Simple middleware that runs before the {@link RouteCallback}
 	 * can return data for {@link RouteContext.data}
 	 * */
-	export class Middleware {
-		constructor(private readonly callback: MiddlewareCallback) {}
+	export class Middleware<D = void> {
+		private callback: MiddlewareCallback<D>;
+
+		constructor(argument: MiddlewareCallback<D> | MiddlewareProvider<D>) {
+			this.callback = Obj.isObjectWith<MiddlewareProvider<D>>(argument, "middleware")
+				? argument.middleware
+				: argument;
+		}
 
 		use(controllers: Controller[]): Controller[] {
 			for (const controller of controllers) {
@@ -632,8 +641,8 @@ export namespace Core {
 	type RouterOptions = {
 		globalPrefix?: string;
 		controllers: Controller[];
-		middlewares?: Middleware[];
-		floatingRoutes?: Route[];
+		middlewares?: Middleware<any>[];
+		floatingRoutes?: Route<any, any, any, any, any>[];
 		staticPages?: Record<string, Adapter.HTMLBundle>;
 		onError?: ErrorCallback;
 		onNotFound?: FetchCallback;

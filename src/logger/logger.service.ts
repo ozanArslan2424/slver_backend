@@ -41,7 +41,7 @@ export class LoggerService extends Core.Service implements Adapter.Logger {
 		this.logger.log(LogLevel.debug, msg, ...args);
 	}
 
-	onRequest = this.makeMiddlewareHandler((c) => {
+	middleware = this.makeMiddlewareHandler((c) => {
 		const isOpenAPIRequest = c.url.origin.includes("ely.sia");
 		const path = c.url.pathname;
 

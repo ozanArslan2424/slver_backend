@@ -26,7 +26,6 @@ export class RateLimitService extends Core.Service {
 	}
 
 	middleware = this.makeMiddlewareHandler(async (c) => {
-		// this.logger.log("rateLimitMiddleware - Start");
 		const authId = this.getAuthId(c.headers);
 		const cookieId = this.getCookieId(c.req);
 		const ipId = this.getIpId(c.headers);
@@ -36,7 +35,6 @@ export class RateLimitService extends Core.Service {
 		if (!TXT.isDefined(id)) {
 			const cookieValue = this.setRateLimitCookie(c.cookies);
 			id = `c:${cookieValue}`;
-			// this.logger.log("rateLimitMiddleware - Set new cookie");
 		}
 
 		const now = Date.now();
@@ -51,18 +49,13 @@ export class RateLimitService extends Core.Service {
 
 		const allowed = entry.hits <= this.rlMax;
 		const remaining = Math.max(0, this.rlMax - entry.hits);
-		// this.logger.log(
-		// 	`rateLimitMiddleware - Hits: ${rate.remaining}/${this.rlMax}, Allowed: ${rate.allowed}`,
-		// );
 
 		this.setRateLimitHeader(c.headers, entry.resetAt, remaining);
 
 		if (!allowed) {
-			// this.logger.log("rateLimitMiddleware - Rate limit exceeded");
+			this.logger.error("RATE_LIMIT_HIT", { id, timestamp: Date.now() });
 			throw new Core.Err("Too many requests", Core.Status.TOO_MANY_REQUESTS);
 		}
-
-		// this.logger.log("rateLimitMiddleware - Completed");
 	});
 
 	private hash(data: string): string {

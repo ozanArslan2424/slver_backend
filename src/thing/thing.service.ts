@@ -11,29 +11,39 @@ import type { DBService } from "@/db/db.service";
 import type { AuthService } from "@/auth/auth.service";
 import type { Prisma } from "prisma/generated/client";
 import { Status } from "prisma/generated/enums";
+import type { SeenStatusService } from "@/seen-status/seen-status.service";
 
 export class ThingService extends Core.Service {
 	constructor(
 		private readonly db: DBService,
 		private readonly authService: AuthService,
 		private readonly groupService: GroupService,
+		private readonly seenStatusService: SeenStatusService,
 	) {
 		super();
 	}
 
 	async create(headers: Core.Headers, body: ThingCreateData) {
 		const profile = await this.authService.getProfile(headers);
-		const membership = await this.groupService.getMembership(profile);
-		const isMember = membership && membership.status === Status.accepted;
-		return await this.db.thing.create({
-			data: {
-				createdById: profile.id,
-				content: body.content,
-				dueDate: body.dueDate,
-				groupId: isMember ? membership.groupId : undefined,
-				assignedToId: isMember ? undefined : profile.id,
-			},
-			include: { assignedTo: true },
+
+		return await this.db.$transaction(async (tx) => {
+			const membership = await this.groupService.getMembership(profile, tx);
+			const isMember = membership && membership.status === Status.accepted;
+
+			const thing = await tx.thing.create({
+				data: {
+					createdById: profile.id,
+					content: body.content,
+					dueDate: body.dueDate,
+					groupId: isMember ? membership.groupId : undefined,
+					assignedToId: isMember ? undefined : profile.id,
+				},
+				include: { assignedTo: true },
+			});
+
+			await this.seenStatusService.onThingCreate(thing, tx);
+
+			return thing;
 		});
 	}
 
@@ -58,12 +68,16 @@ export class ThingService extends Core.Service {
 			where = { createdById: profile.id };
 		}
 
-		return await this.db.thing.findMany({
+		const list = await this.db.thing.findMany({
 			where,
 			include: { assignedTo: true },
 			distinct: ["id"],
 			orderBy: [{ doneDate: { sort: "desc", nulls: "last" } }, { createdAt: "desc" }],
 		});
+
+		await this.seenStatusService.updateMany({ personId: profile.id, thingList: list });
+
+		return list;
 	}
 
 	async assign(headers: Core.Headers, body: ThingAssignData) {

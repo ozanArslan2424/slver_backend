@@ -14,6 +14,8 @@ import { RateLimitService } from "@/rate-limit/rate-limit.service";
 import { ThingController } from "@/thing/thing.controller";
 import { ThingService } from "@/thing/thing.service";
 import { Config } from "@/lib/config.namespace";
+import { SeenStatusService } from "@/seen-status/seen-status.service";
+import { SeenStatusController } from "@/seen-status/seen-status.controller";
 
 async function main() {
 	const logger = new LoggerService();
@@ -25,18 +27,20 @@ async function main() {
 	const rateLimitService = new RateLimitService(logger, authService);
 	const mailService = new MailService(logger, languageService);
 	const groupService = new GroupService(db, authService, personService, mailService);
-	const thingService = new ThingService(db, authService, groupService);
+	const seenStatusService = new SeenStatusService(db, authService);
+	const thingService = new ThingService(db, authService, groupService, seenStatusService);
+
+	const healthRoute = new Core.Route("GET", "/health", () => "ok");
 
 	const authController = new AuthController(authService);
 	const thingController = new ThingController(thingService);
 	const groupController = new GroupController(groupService);
+	const seenStatusController = new SeenStatusController(seenStatusService);
 
-	const healthRoute = new Core.Route("GET", "/health", (c) => c);
-
-	const loggerMiddleware = new Core.Middleware((c) => logger.onRequest(c));
-	const groupMiddleware = new Core.Middleware((c) => groupService.middleware(c));
-	const languageMiddleware = new Core.Middleware((c) => languageService.middleware(c));
-	const rateLimitMiddleware = new Core.Middleware((c) => rateLimitService.middleware(c));
+	const loggerMiddleware = new Core.Middleware(logger);
+	const groupMiddleware = new Core.Middleware(groupService);
+	const languageMiddleware = new Core.Middleware(languageService);
+	const rateLimitMiddleware = new Core.Middleware(rateLimitService);
 
 	const cors = new Core.Cors({
 		allowedOrigins: [
@@ -56,7 +60,7 @@ async function main() {
 
 	const router = new Core.Router({
 		globalPrefix: "/api",
-		controllers: [authController, thingController, groupController],
+		controllers: [authController, thingController, groupController, seenStatusController],
 		middlewares: [loggerMiddleware, groupMiddleware, languageMiddleware, rateLimitMiddleware],
 		floatingRoutes: [healthRoute],
 		onError: (err) => errorService.handler(err),
