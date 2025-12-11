@@ -78,9 +78,10 @@ async function main() {
 		fallback: 3000,
 	});
 
+	server.setHostname("0.0.0.0");
 	server.listen(port);
 
-	logger.log(`📡 Listening on port ${port}`);
+	logger.log(`📡 Listening on ${server.hostname} ${server.port}`);
 }
 
 Help.perform(main);

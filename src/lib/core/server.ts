@@ -1,20 +1,26 @@
+import type { __Core_DBClientInterface } from "@/lib/core/db-client";
 import { Adapter } from "../adapter.namespace";
 import type { __Core_Cors } from "./cors";
 import { __Core_Request } from "./request";
 import type { __Core_Router } from "./router";
+import type { __Core_Logger } from "@/lib/core/logger";
+import type { __Adapter_ServeOptions } from "@/lib/adapter/serve-options";
 
 export type __Core_ServerOptions = {
-	db?: Adapter.DBClientInterface;
+	db?: __Core_DBClientInterface;
 	router: __Core_Router;
-	logger?: Adapter.Logger;
+	logger: __Core_Logger;
 	cors?: __Core_Cors;
 };
 
 export class __Core_Server {
-	db?: Adapter.DBClientInterface;
+	db?: __Core_DBClientInterface;
 	router: __Core_Router;
-	logger: Adapter.Logger;
+	logger: __Core_Logger;
 	cors?: __Core_Cors;
+
+	port?: __Adapter_ServeOptions["port"];
+	hostname?: __Adapter_ServeOptions["hostname"];
 
 	constructor(readonly options: __Core_ServerOptions) {
 		this.db = options.db;
@@ -23,7 +29,13 @@ export class __Core_Server {
 		this.cors = options.cors;
 	}
 
-	public async listen(port: number) {
+	public setHostname(hostname?: __Adapter_ServeOptions["hostname"]) {
+		this.hostname = hostname;
+	}
+
+	public async listen(port: __Adapter_ServeOptions["port"]) {
+		this.port = port;
+
 		const exit = async () => {
 			this.logger.log("Shutting down gracefully...");
 			await this.db?.disconnect();
@@ -38,6 +50,7 @@ export class __Core_Server {
 
 			return Adapter.serveBun({
 				port,
+				hostname: this.hostname,
 				fetch: async (request) => {
 					const req = new __Core_Request(request);
 					const res = await this.router.handleFetch(req);
