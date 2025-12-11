@@ -24,11 +24,20 @@ export class __Core_Response<R = unknown> {
 	) {
 		this.headers = new __Core_Headers(this.init?.headers);
 
-		if (this.init?.cookies?.entries()) {
-			for (const cookieOptions of this.init.cookies.values()) {
-				this.headers.append("Set-Cookie", __Core_Cookies.createHeader(cookieOptions));
+		const setCookieHeaders = this.init?.cookies?.toSetCookieHeaders();
+
+		if (setCookieHeaders) {
+			for (const header of setCookieHeaders) {
+				this.headers.append("Set-Cookie", header);
 			}
 		}
+
+		//
+		// if (this.init?.cookies?.entries()) {
+		// 	for (const cookieOptions of this.init.cookies.values()) {
+		// 		this.headers.append("Set-Cookie", __Core_Cookies.createHeader(cookieOptions));
+		// 	}
+		// }
 
 		if (Obj.isJSONSerializable(this.body)) {
 			this.body = JSON.stringify(this.body);

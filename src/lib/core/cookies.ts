@@ -1,4 +1,5 @@
-import { TXT } from "../txt.namespace";
+import { Adapter } from "@/lib/adapter.namespace";
+import { TXT } from "@/lib/txt.namespace";
 
 export type __Core_CookieOptions = {
 	name: string;
@@ -9,13 +10,75 @@ export type __Core_CookieOptions = {
 	expires?: number | Date;
 	secure?: boolean;
 	/** Defaults to `lax`. */
-	sameSite?: "Strict" | "Lax" | "None";
+	sameSite?: "strict" | "lax" | "none";
 	httpOnly?: boolean;
 	partitioned?: boolean;
 	maxAge?: number;
 };
 
-export class __Core_Cookies extends Bun.CookieMap {}
+export class __Core_Cookies extends Adapter.Cookies {
+	constructor() {
+		super();
+	}
+
+	getOptions(key: string): __Core_CookieOptions | null {
+		const cookie = this.get(key);
+		console.log(cookie);
+		return null;
+	}
+
+	decodeValue(cookieString: string): string | null {
+		const encodedValue = TXT.after("=", cookieString);
+		if (!encodedValue) return null;
+		return decodeURIComponent(encodedValue);
+	}
+
+	static createHeader(opt: __Core_CookieOptions): string {
+		let result = `${encodeURIComponent(opt.name)}=${encodeURIComponent(opt.value)}`;
+
+		if (TXT.isDefined(opt.domain)) {
+			result += `; Domain=${opt.domain}`;
+		}
+
+		if (TXT.isDefined(opt.path)) {
+			result += `; Path=${opt.path}`;
+		} else {
+			result += `; Path=/`;
+		}
+
+		if (opt.expires) {
+			if (typeof opt.expires === "number") {
+				result += `; Expires=${new Date(opt.expires).toUTCString()}`;
+			} else {
+				result += `; Expires=${opt.expires.toUTCString()}`;
+			}
+		}
+
+		if (opt.maxAge && Number.isInteger(opt.maxAge)) {
+			result += `; Max-Age=${opt.maxAge}`;
+		}
+
+		if (opt.secure === true) {
+			result += "; Secure";
+		}
+
+		if (opt.httpOnly === true) {
+			result += "; HttpOnly";
+		}
+
+		if (opt.partitioned === true) {
+			result += "; Partitioned";
+		}
+
+		if (TXT.isDefined(opt.sameSite)) {
+			result += `; SameSite=${TXT.capitalize(opt.sameSite)}`;
+		} else {
+			result += `; SameSite=Lax`;
+		}
+
+		return result;
+	}
+}
 
 // export class __Core_Cookies {
 // 	constructor() {}
@@ -59,12 +122,6 @@ export class __Core_Cookies extends Bun.CookieMap {}
 //
 // 	keys(): Array<string> {
 // 		return Array.from(this.map.keys());
-// 	}
-//
-// 	static decodeValue(cookieString: string): string | null {
-// 		const encodedValue = TXT.after("=", cookieString);
-// 		if (!encodedValue) return null;
-// 		return decodeURIComponent(encodedValue);
 // 	}
 //
 // 	static createHeader(opt: __Core_CookieOptions): string {

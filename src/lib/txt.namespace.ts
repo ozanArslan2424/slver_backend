@@ -67,4 +67,8 @@ export namespace TXT {
 			.join("/");
 		return `/${joined}`;
 	}
+
+	export function capitalize(input: string): string {
+		return input.length > 0 ? input.charAt(0).toLocaleUpperCase() + input.slice(1) : input;
+	}
 }

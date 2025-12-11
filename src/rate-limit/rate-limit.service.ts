@@ -1,5 +1,4 @@
 import type { AuthService } from "@/auth/auth.service";
-import { Config } from "@/lib/config.namespace";
 import { Core } from "@/lib/core.namespace";
 import { Encrypt } from "@/lib/encrypt.namespace";
 import { TXT } from "@/lib/txt.namespace";

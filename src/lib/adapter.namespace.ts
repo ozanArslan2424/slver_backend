@@ -1,3 +1,4 @@
+import { __Adapter_Cookies } from "@/lib/adapter/onlybun-cookies";
 import { __Adapter_serveBun } from "./adapter/bun/serve";
 import { __Adapter_Error } from "./adapter/error";
 import { __Adapter_Headers } from "./adapter/headers";
@@ -24,6 +25,9 @@ export namespace Adapter {
 
 	export var Headers = __Adapter_Headers;
 	export interface Headers extends __Adapter_Headers {}
+
+	export var Cookies = __Adapter_Cookies;
+	export interface Cookies extends __Adapter_Cookies {}
 
 	export var Error = __Adapter_Error;
 	export interface Error extends __Adapter_Error {}
