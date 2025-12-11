@@ -3,15 +3,14 @@ import "dotenv/config";
 import pkgJson from "package.json";
 
 export namespace Config {
-	export const env = Adapter.getBunEnv();
 	export const pkg = pkgJson;
 
-	type Env = Adapter.BunEnv;
+	type Env = Bun.Env;
 	type Key = keyof Env | (string & {});
 	type Parser<T> = (value: string) => T;
 
 	export function get<T = string>(key: Key, opts?: { parser?: Parser<T>; fallback?: T }): T {
-		const value = env[key];
+		const value = Bun.env[key];
 		if (value !== undefined && value !== "") {
 			return opts?.parser ? opts?.parser(value) : (value as T);
 		} else if (opts?.fallback !== undefined) {
@@ -23,6 +22,6 @@ export namespace Config {
 
 	export function isDev() {
 		// Normally undefined, should be set manually in production
-		return env.NODE_ENV !== "production";
+		return Bun.env.NODE_ENV !== "production";
 	}
 }

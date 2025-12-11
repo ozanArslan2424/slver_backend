@@ -1,8 +1,6 @@
-import { __Adapter_getBunEnv, type __Adapter_BunEnv } from "./adapter/bun/env";
 import { __Adapter_serveBun } from "./adapter/bun/serve";
 import { __Adapter_Error } from "./adapter/error";
 import { __Adapter_Headers } from "./adapter/headers";
-import { __Adapter_getNodeEnv, type __Adapter_NodeEnv } from "./adapter/node-http/env";
 import { __Adapter_serveNodeHTTP } from "./adapter/node-http/serve";
 import type { __Adapter_HTMLBundle } from "./adapter/onlybun-html-bundle";
 import {
@@ -15,12 +13,6 @@ import type { __Adapter_ServeOptions } from "./adapter/serve-options";
 import { __Adapter_zodParse, type __Adapter_ZodSchemaType } from "./adapter/zod/parse";
 
 export namespace Adapter {
-	// TODO: Make adapter actually adapt to the runtime
-	export type BunEnv = __Adapter_BunEnv;
-	export type NodeEnv = __Adapter_NodeEnv;
-	export const getBunEnv = __Adapter_getBunEnv;
-	export const getNodeEnv = __Adapter_getNodeEnv;
-
 	export type RequestInfo = __Adapter_RequestInfo;
 	export interface RequestInit extends __Adapter_RequestInit {}
 	export var Request = __Adapter_Request;
