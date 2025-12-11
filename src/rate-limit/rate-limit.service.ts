@@ -1,4 +1,5 @@
 import type { AuthService } from "@/auth/auth.service";
+import { Config } from "@/lib/config.namespace";
 import { Core } from "@/lib/core.namespace";
 import { Encrypt } from "@/lib/encrypt.namespace";
 import { TXT } from "@/lib/txt.namespace";
@@ -103,6 +104,7 @@ export class RateLimitService extends Core.Service {
 	}
 
 	setRateLimitCookie(cookies: Core.Cookies) {
+		const domain = new URL(Config.get("CLIENT_URL")).hostname;
 		const value = Encrypt.uuid();
 		cookies.set({
 			name: this.rateLimitCookie,
@@ -112,6 +114,7 @@ export class RateLimitService extends Core.Service {
 			sameSite: "None",
 			path: "/",
 			maxAge: 365 * 24 * 3600,
+			domain,
 		});
 		return value;
 	}
