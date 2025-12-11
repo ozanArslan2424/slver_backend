@@ -6,7 +6,7 @@
 	"scripts": {
 		"dev": "bun --hot src/main.ts",
 		"build": "bun run src/build.ts",
-		"start": "bun run dist/main.js",
+		"start": "bun run dist/main",
 		"compile": "bun build --compile --target bun --outfile app src/main.ts",
 		"execute": "./app",
 		"fm": "bunx --bun prettier --write .",
