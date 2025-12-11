@@ -1,10 +1,10 @@
 import type { LoginData, RegisterData } from "@/auth/auth.schema";
-import type { PersonService } from "@/person/person.service";
-import { Core } from "@/lib/core.namespace";
-import { Help } from "@/lib/help.namespace";
 import type { DBService } from "@/db/db.service";
 import { Config } from "@/lib/config.namespace";
+import { Core } from "@/lib/core.namespace";
 import { Encrypt } from "@/lib/encrypt.namespace";
+import { Help } from "@/lib/help.namespace";
+import type { PersonService } from "@/person/person.service";
 
 export class AuthService extends Core.Service {
 	readonly jwtRefreshSecret = Config.get("JWT_REFRESH_SECRET");
@@ -31,12 +31,12 @@ export class AuthService extends Core.Service {
 		});
 		if (!user) {
 			console.log("!user");
-			throw new Core.Err("UNAUTHORIZED", Core.Status.UNAUTHORIZED);
+			throw new Core.Error("UNAUTHORIZED", Core.Status.UNAUTHORIZED);
 		}
 		const profile = await this.personService.getByUserId(payload.userId);
 		if (!profile) {
 			console.log("!profile");
-			throw new Core.Err("UNAUTHORIZED", Core.Status.UNAUTHORIZED);
+			throw new Core.Error("UNAUTHORIZED", Core.Status.UNAUTHORIZED);
 		}
 		return { ...profile, emailVerified: user.emailVerified };
 	}
@@ -46,15 +46,15 @@ export class AuthService extends Core.Service {
 			where: { email: body.email },
 		});
 		if (!user) {
-			throw new Core.Err("auth.invalid", Core.Status.BAD_REQUEST);
+			throw new Core.Error("auth.invalid", Core.Status.BAD_REQUEST);
 		}
 		const pwdMatch = await Encrypt.verifyPassword(body.password, user.password);
 		if (!pwdMatch) {
-			throw new Core.Err("auth.invalid", Core.Status.BAD_REQUEST);
+			throw new Core.Error("auth.invalid", Core.Status.BAD_REQUEST);
 		}
 		const profile = await this.personService.getByUserId(user.id);
 		if (!profile) {
-			throw new Core.Err("auth.invalid", Core.Status.BAD_REQUEST);
+			throw new Core.Error("auth.invalid", Core.Status.BAD_REQUEST);
 		}
 		const refreshToken = this.signRefreshToken(profile.userId);
 		this.setRefreshCookie(cookies, refreshToken);
@@ -68,7 +68,7 @@ export class AuthService extends Core.Service {
 			where: { email: body.email },
 		});
 		if (exists) {
-			throw new Core.Err("auth.registerExists", Core.Status.BAD_REQUEST);
+			throw new Core.Error("auth.registerExists", Core.Status.BAD_REQUEST);
 		}
 		const oneHourFromNow = new Date(Date.now() + 60 * 60 * 1000);
 		const otp = Help.generateOTP();
@@ -96,7 +96,7 @@ export class AuthService extends Core.Service {
 		return { profile, accessToken };
 	}
 
-	async refresh(req: Core.Req, cookies: Core.Cookies) {
+	async refresh(req: Core.Request, cookies: Core.Cookies) {
 		const payload = this.getRefreshPayload(req);
 		const profile = await this.guard(payload);
 		const refreshToken = this.signRefreshToken(profile.userId);
@@ -123,21 +123,22 @@ export class AuthService extends Core.Service {
 			value: token,
 			httpOnly: true,
 			expires: new Date(Date.now() + Help.milliseconds["7d"]),
-			sameSite: "strict",
+			sameSite: "None",
 			path: "/",
+			secure: true,
 		});
 	}
 
-	getRefreshPayload(req: Core.Req): Encrypt.JwtPayload {
+	getRefreshPayload(req: Core.Request): Encrypt.JwtPayload {
 		const refreshToken = req.cookies.getValue(this.authCookie);
 		if (!refreshToken) {
 			console.log("!refreshToken");
-			throw new Core.Err("UNAUTHORIZED", Core.Status.UNAUTHORIZED);
+			throw new Core.Error("UNAUTHORIZED", Core.Status.UNAUTHORIZED);
 		}
 		try {
 			return Encrypt.verifyJwt(refreshToken, this.jwtRefreshSecret) as Encrypt.JwtPayload;
 		} catch {
-			throw new Core.Err("Invalid refresh token", Core.Status.BAD_REQUEST);
+			throw new Core.Error("Invalid refresh token", Core.Status.BAD_REQUEST);
 		}
 	}
 
@@ -158,12 +159,12 @@ export class AuthService extends Core.Service {
 		const token = this.getAccessToken(headers);
 		if (!token) {
 			console.log("!token");
-			throw new Core.Err("UNAUTHORIZED", Core.Status.UNAUTHORIZED);
+			throw new Core.Error("UNAUTHORIZED", Core.Status.UNAUTHORIZED);
 		}
 		try {
 			return Encrypt.verifyJwt(token, this.jwtAccessSecret) as Encrypt.JwtPayload;
 		} catch {
-			throw new Core.Err("Invalid access token", Core.Status.BAD_REQUEST);
+			throw new Core.Error("Invalid access token", Core.Status.BAD_REQUEST);
 		}
 	}
 }

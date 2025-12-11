@@ -1,12 +1,6 @@
 import { PersonDataSchema } from "@/person/person.schema";
 import z from "zod";
 
-declare module "jsonwebtoken" {
-	interface JwtPayload {
-		userId: string;
-	}
-}
-
 export const LoginSchema = z.object({
 	email: z.email(),
 	password: z.string().min(8),

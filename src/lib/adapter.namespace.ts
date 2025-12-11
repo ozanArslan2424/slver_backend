@@ -1,113 +1,49 @@
-import type z from "zod";
+import { __Adapter_getBunEnv, type __Adapter_BunEnv } from "./adapter/bun/env";
+import { __Adapter_serveBun } from "./adapter/bun/serve";
+import { __Adapter_Error } from "./adapter/error";
+import { __Adapter_Headers } from "./adapter/headers";
+import { __Adapter_getNodeEnv, type __Adapter_NodeEnv } from "./adapter/node-http/env";
+import { __Adapter_serveNodeHTTP } from "./adapter/node-http/serve";
+import type { __Adapter_HTMLBundle } from "./adapter/onlybun-html-bundle";
+import {
+	__Adapter_Request,
+	type __Adapter_RequestInfo,
+	type __Adapter_RequestInit,
+} from "./adapter/request";
+import { __Adapter_Response, type __Adapter_ResponseBodyInit } from "./adapter/response";
+import type { __Adapter_ServeOptions } from "./adapter/serve-options";
+import { __Adapter_zodParse, type __Adapter_ZodSchemaType } from "./adapter/zod/parse";
 
 export namespace Adapter {
 	// TODO: Make adapter actually adapt to the runtime
-	export type Env = Bun.Env;
+	export type BunEnv = __Adapter_BunEnv;
+	export type NodeEnv = __Adapter_NodeEnv;
+	export const getBunEnv = __Adapter_getBunEnv;
+	export const getNodeEnv = __Adapter_getNodeEnv;
 
-	export type ReqInfo = RequestInfo;
-	export interface ReqInit extends RequestInit {}
-	export var Req = Request;
-	export interface Req extends Request {}
+	export type RequestInfo = __Adapter_RequestInfo;
+	export interface RequestInit extends __Adapter_RequestInit {}
+	export var Request = __Adapter_Request;
+	export interface Request extends __Adapter_Request {}
 
-	export interface Res extends Response {}
-	export var Res = Response;
-	export type ResBodyInit = BodyInit;
+	export interface Response extends __Adapter_Response {}
+	export var Response = __Adapter_Response;
+	export type ResponseBodyInit = __Adapter_ResponseBodyInit;
 
-	export var Header = Headers;
-	export interface Header extends Headers {}
+	export var Headers = __Adapter_Headers;
+	export interface Headers extends __Adapter_Headers {}
 
-	export var Err = Error;
-	export interface Err extends Error {}
+	export var Error = __Adapter_Error;
+	export interface Error extends __Adapter_Error {}
 
-	export type HTMLBundle = Bun.HTMLBundle;
+	// TODO: Make adapter actually adapt to the runtime
+	export interface ServeOptions extends __Adapter_ServeOptions {}
+	export const serveBun = __Adapter_serveBun;
+	export const serveNodeHTTP = __Adapter_serveNodeHTTP;
 
-	export interface ServeOptions {
-		port: number;
-		fetch: (request: Request) => Promise<Response>;
-		staticPages?: Record<string, HTMLBundle>;
-	}
+	// TODO: Make adapter actually adapt to the schema library
+	export type ZodType<T extends unknown = unknown> = __Adapter_ZodSchemaType<T>;
+	export const zodParse = __Adapter_zodParse;
 
-	export function serve(options: ServeOptions) {
-		return Bun.serve({
-			port: options.port,
-			fetch: options.fetch,
-			routes: options.staticPages,
-		});
-
-		// TODO: Make adapter actually adapt to the runtime
-		//
-		// const server = http.createServer(
-		// 	async (incomingMessage, serverResponse) => {
-		// 		const url = `http://${incomingMessage.headers.host}${incomingMessage.url}`;
-		// 		let body: Buffer<ArrayBuffer> | undefined = undefined;
-		// 		const headers = new Header();
-		// 		const method = incomingMessage.method?.toUpperCase() ?? "GET";
-		// 		let req: Req;
-		//
-		// 		console.log({
-		// 			reqUrl: incomingMessage.url,
-		// 			url,
-		// 		});
-		//
-		// 		const chunks: Uint8Array[] = [];
-		// 		for await (const chunk of incomingMessage) {
-		// 			chunks.push(chunk);
-		// 		}
-		// 		if (chunks.length > 0) {
-		// 			body = Buffer.concat(chunks);
-		// 		}
-		//
-		// 		for (const [key, value] of Object.entries(incomingMessage.headers)) {
-		// 			if (Array.isArray(value)) {
-		// 				for (const v of value) headers.append(key, v);
-		// 			} else if (value != null && typeof value === "string") {
-		// 				headers.append(key, value);
-		// 			}
-		// 		}
-		//
-		// 		if (method !== "GET") {
-		// 			req = new Req(url, { method, headers, body });
-		// 		} else {
-		// 			req = new Req(url, { method, headers });
-		// 		}
-		//
-		// 		const res = await options.fetch(req);
-		// 		const resData = await res.arrayBuffer();
-		//
-		// 		serverResponse.statusCode = res.status;
-		// 		serverResponse.setHeaders(res.headers);
-		// 		serverResponse.end(Buffer.from(resData));
-		// 	},
-		// );
-		//
-		// server.listen(options.port);
-		//
-		// return server;
-	}
-
-	export type SchemaType<T extends unknown = unknown> = z.ZodType<T>;
-
-	export function parse<Schema extends unknown>(
-		data: unknown,
-		schema: SchemaType<Schema>,
-		errorMessage: string,
-	): Schema {
-		const result = schema.safeParse(data);
-		if (!result.success) {
-			throw new Err(errorMessage, result.error);
-		}
-		return result.data;
-	}
-
-	export interface DBClientInterface {
-		connect(): Promise<void>;
-		disconnect(): Promise<void>;
-	}
-
-	export interface Logger {
-		error: (...args: any[]) => void;
-		warn: (...args: any[]) => void;
-		log: (...args: any[]) => void;
-		debug: (...args: any[]) => void;
-	}
+	export type HTMLBundle = __Adapter_HTMLBundle;
 }

@@ -1,20 +1,20 @@
+import type { AuthService } from "@/auth/auth.service";
+import type { TransactionClient } from "@/db/db.schema";
+import type { DBService } from "@/db/db.service";
 import type {
 	GroupCreateData,
 	GroupInviteData,
 	GroupJoinData,
 	GroupRemoveData,
 } from "@/group/group.schema";
-import { PersonRole, Status } from "prisma/generated/enums";
+import { Core } from "@/lib/core.namespace";
+import { Encrypt } from "@/lib/encrypt.namespace";
+import { Help } from "@/lib/help.namespace";
+import type { MailService } from "@/mail/mail.service";
 import type { PersonData } from "@/person/person.schema";
 import type { PersonService } from "@/person/person.service";
-import type { MailService } from "@/mail/mail.service";
-import { Core } from "@/lib/core.namespace";
-import { Help } from "@/lib/help.namespace";
-import type { DBService } from "@/db/db.service";
-import { Encrypt } from "@/lib/encrypt.namespace";
-import type { AuthService } from "@/auth/auth.service";
 import type { Membership } from "prisma/generated/client";
-import type { TransactionClient } from "@/db/db.schema";
+import { PersonRole, Status } from "prisma/generated/enums";
 
 export class GroupService extends Core.Service {
 	readonly groupIdHeader = "x-group-id";
@@ -66,11 +66,11 @@ export class GroupService extends Core.Service {
 
 	async get() {
 		const groupId = this.getGroupId();
-		if (!groupId) throw new Core.Err("group.idNotFound", 400);
+		if (!groupId) throw new Core.Error("group.idNotFound", 400);
 		const group = await this.db.group.findUnique({
 			where: { id: groupId },
 		});
-		if (!group) throw new Core.Err("group.notFound", 404);
+		if (!group) throw new Core.Error("group.notFound", 404);
 		return group;
 	}
 
@@ -116,7 +116,7 @@ export class GroupService extends Core.Service {
 			},
 		});
 		if (!membership) {
-			throw new Core.Err("group.invalidPassword", 400);
+			throw new Core.Error("group.invalidPassword", 400);
 		}
 		const updatedMembership = await this.db.membership.update({
 			where: {
@@ -133,18 +133,18 @@ export class GroupService extends Core.Service {
 		const profile = await this.authService.getProfile(headers);
 		const groupId = this.getGroupId();
 		if (!groupId) {
-			throw new Core.Err("group.idNotFound", 400);
+			throw new Core.Error("group.idNotFound", 400);
 		}
 		const profileMembership = profile.memberships.find((m) => m.groupId === groupId);
 		if (!profileMembership) {
-			throw new Core.Err("group.notMember", 400);
+			throw new Core.Error("group.notMember", 400);
 		}
 		if (profileMembership.role === PersonRole.user) {
-			throw new Core.Err("group.notAdmin", 400);
+			throw new Core.Error("group.notAdmin", 400);
 		}
 		const person = await this.personService.getByEmail(body.email);
 		if (!person) {
-			throw new Core.Err("person.notFound", 404);
+			throw new Core.Error("person.notFound", 404);
 		}
 		const exists = await this.db.membership.findUnique({
 			where: {
@@ -160,7 +160,7 @@ export class GroupService extends Core.Service {
 				[Status.rejected]: "group.inviteRejected",
 				[Status.pending]: "group.invitePending",
 			};
-			throw new Core.Err(messages[exists.status], 400);
+			throw new Core.Error(messages[exists.status], 400);
 		}
 
 		const generatedPassword = Help.generateOTP();
@@ -189,14 +189,14 @@ export class GroupService extends Core.Service {
 		const profile = await this.authService.getProfile(headers);
 		const groupId = this.getGroupId();
 		if (!groupId) {
-			throw new Core.Err("group.idNotFound", 400);
+			throw new Core.Error("group.idNotFound", 400);
 		}
 		const role = profile.memberships.find((m) => m.groupId === groupId)?.role;
 		if (!role) {
-			throw new Core.Err("group.notMember", 400);
+			throw new Core.Error("group.notMember", 400);
 		}
 		if (role === PersonRole.user) {
-			throw new Core.Err("group.notAdmin", 400);
+			throw new Core.Error("group.notAdmin", 400);
 		}
 
 		await this.db.membership.update({

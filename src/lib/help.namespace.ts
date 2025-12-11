@@ -88,7 +88,7 @@ export namespace Help {
 			} else {
 				message = `${conditionName}: ${message}`;
 			}
-			throw new Adapter.Err(message);
+			throw new Adapter.Error(message);
 		}
 	}
 }

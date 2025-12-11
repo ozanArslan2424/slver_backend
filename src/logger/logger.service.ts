@@ -1,10 +1,10 @@
-import winston from "winston";
-import { LogLevel, type RequestData } from "@/logger/logger.schema";
-import { Core } from "@/lib/core.namespace";
 import type { Adapter } from "@/lib/adapter.namespace";
 import { Config } from "@/lib/config.namespace";
+import { Core } from "@/lib/core.namespace";
+import { LogLevel, type RequestData } from "@/logger/logger.schema";
+import winston from "winston";
 
-export class LoggerService extends Core.Service implements Adapter.Logger {
+export class LoggerService extends Core.Service implements Core.Logger {
 	private readonly loggerEnabled = true;
 	private readonly isDevelopment = Config.isDev();
 	private readonly logLevel = Config.get("LOG_LEVEL", {
@@ -58,8 +58,8 @@ export class LoggerService extends Core.Service implements Adapter.Logger {
 		});
 	}
 
-	onError(error: Adapter.Err) {
-		if (error instanceof Core.Err) {
+	onError(error: Adapter.Error) {
+		if (error instanceof Core.Error) {
 			if (error.status >= 500) {
 				this.error(error.name, error);
 			}

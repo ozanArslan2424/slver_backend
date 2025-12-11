@@ -54,7 +54,7 @@ export class RateLimitService extends Core.Service {
 
 		if (!allowed) {
 			this.logger.error("RATE_LIMIT_HIT", { id, timestamp: Date.now() });
-			throw new Core.Err("Too many requests", Core.Status.TOO_MANY_REQUESTS);
+			throw new Core.Error("Too many requests", Core.Status.TOO_MANY_REQUESTS);
 		}
 	});
 
@@ -77,7 +77,7 @@ export class RateLimitService extends Core.Service {
 		return `u:${this.hash(token)}`;
 	}
 
-	private getCookieId(req: Core.Req) {
+	private getCookieId(req: Core.Request) {
 		const cookieValue = req.cookies.getValue(this.rateLimitCookie);
 		if (!cookieValue || typeof cookieValue !== "string") return null;
 		return `c:${cookieValue}`;
@@ -109,7 +109,7 @@ export class RateLimitService extends Core.Service {
 			value,
 			httpOnly: true,
 			secure: true,
-			sameSite: "lax",
+			sameSite: "None",
 			path: "/",
 			maxAge: 365 * 24 * 3600,
 		});

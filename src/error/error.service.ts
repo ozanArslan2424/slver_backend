@@ -1,6 +1,6 @@
 import type { LanguageService } from "@/language/language.service";
-import { Core } from "@/lib/core.namespace";
 import type { Adapter } from "@/lib/adapter.namespace";
+import { Core } from "@/lib/core.namespace";
 import type { LoggerService } from "@/logger/logger.service";
 import { Prisma } from "prisma/generated/client";
 
@@ -12,7 +12,7 @@ export class ErrorService extends Core.Service {
 		super();
 	}
 
-	private readonly prismaStatus: Record<string, Core.StatusType> = {
+	private readonly prismaStatus: Record<string, Core.Status> = {
 		P2000: Core.Status.BAD_REQUEST,
 		P2001: Core.Status.NOT_FOUND,
 		P2002: Core.Status.CONFLICT,
@@ -33,14 +33,14 @@ export class ErrorService extends Core.Service {
 		return `prisma.${code}`;
 	}
 
-	async handler(err: Adapter.Err) {
+	async handler(err: Adapter.Error) {
 		this.logger.onError(err);
 
-		let status: Core.StatusType = Core.Status.INTERNAL_SERVER_ERROR;
+		let status: Core.Status = Core.Status.INTERNAL_SERVER_ERROR;
 		let key = err.message;
 
 		switch (true) {
-			case err instanceof Core.Err:
+			case err instanceof Core.Error:
 				key = err.message;
 				status = err.status;
 				break;
@@ -67,6 +67,6 @@ export class ErrorService extends Core.Service {
 
 		const t = await this.languageService.makeTranslator("error");
 
-		return new Core.Res({ message: t(key) }, { status });
+		return new Core.Response({ message: t(key) }, { status });
 	}
 }

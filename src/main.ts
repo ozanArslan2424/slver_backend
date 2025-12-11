@@ -1,21 +1,21 @@
 import { AuthController } from "@/auth/auth.controller";
 import { AuthService } from "@/auth/auth.service";
-import { Core } from "@/lib/core.namespace";
-import { Help } from "@/lib/help.namespace";
 import { DBService } from "@/db/db.service";
 import { ErrorService } from "@/error/error.service";
 import { GroupController } from "@/group/group.controller";
 import { GroupService } from "@/group/group.service";
 import { LanguageService } from "@/language/language.service";
+import { Config } from "@/lib/config.namespace";
+import { Core } from "@/lib/core.namespace";
+import { Help } from "@/lib/help.namespace";
 import { LoggerService } from "@/logger/logger.service";
 import { MailService } from "@/mail/mail.service";
 import { PersonService } from "@/person/person.service";
 import { RateLimitService } from "@/rate-limit/rate-limit.service";
+import { SeenStatusController } from "@/seen-status/seen-status.controller";
+import { SeenStatusService } from "@/seen-status/seen-status.service";
 import { ThingController } from "@/thing/thing.controller";
 import { ThingService } from "@/thing/thing.service";
-import { Config } from "@/lib/config.namespace";
-import { SeenStatusService } from "@/seen-status/seen-status.service";
-import { SeenStatusController } from "@/seen-status/seen-status.controller";
 
 async function main() {
 	const logger = new LoggerService();
@@ -45,7 +45,7 @@ async function main() {
 	const cors = new Core.Cors({
 		allowedOrigins: [
 			Config.get("CLIENT_URL"),
-			...(Config.isDev() ? ["http://192.168.1.5:5173"] : []),
+			...(Config.isDev() ? ["http://localhost:5173"] : []),
 		],
 		allowedMethods: ["GET", "POST"],
 		allowedHeaders: [
