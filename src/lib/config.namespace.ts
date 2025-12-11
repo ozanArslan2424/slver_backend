@@ -10,7 +10,7 @@ export namespace Config {
 	type Parser<T> = (value: string) => T;
 
 	export function get<T = string>(key: Key, opts?: { parser?: Parser<T>; fallback?: T }): T {
-		const value = Bun.env[key];
+		const value = process.env[key];
 		if (value !== undefined && value !== "") {
 			return opts?.parser ? opts?.parser(value) : (value as T);
 		} else if (opts?.fallback !== undefined) {
@@ -22,6 +22,6 @@ export namespace Config {
 
 	export function isDev() {
 		// Normally undefined, should be set manually in production
-		return Bun.env.NODE_ENV !== "production";
+		return process.env.NODE_ENV !== "production";
 	}
 }
