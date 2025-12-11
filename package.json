@@ -6,9 +6,7 @@
 	"scripts": {
 		"dev": "bun --hot src/main.ts",
 		"build": "bun run src/build.ts",
-		"start": "./dist/main",
-		"compile": "bun build --compile --target bun --outfile app src/main.ts",
-		"execute": "./app",
+		"start": "bun run dist/main.js",
 		"fm": "bunx --bun prettier --write .",
 		"lint": "bunx oxlint --type-aware",
 		"db:mig": "bunx --bun prisma migrate dev --create-only",
