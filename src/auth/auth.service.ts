@@ -123,14 +123,14 @@ export class AuthService extends Core.Service {
 			value: token,
 			httpOnly: true,
 			expires: new Date(Date.now() + Help.milliseconds["7d"]),
-			sameSite: "None",
+			sameSite: "none",
 			path: "/",
 			secure: true,
 		});
 	}
 
 	getRefreshPayload(req: Core.Request): Encrypt.JwtPayload {
-		const refreshToken = req.cookies.getValue(this.authCookie);
+		const refreshToken = req.cookies.get(this.authCookie);
 		if (!refreshToken) {
 			console.log("!refreshToken");
 			throw new Core.Error("UNAUTHORIZED", Core.Status.UNAUTHORIZED);

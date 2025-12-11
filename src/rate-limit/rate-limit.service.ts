@@ -79,7 +79,7 @@ export class RateLimitService extends Core.Service {
 	}
 
 	private getCookieId(req: Core.Request) {
-		const cookieValue = req.cookies.getValue(this.rateLimitCookie);
+		const cookieValue = req.cookies.get(this.rateLimitCookie);
 		if (!cookieValue || typeof cookieValue !== "string") return null;
 		return `c:${cookieValue}`;
 	}
@@ -100,7 +100,7 @@ export class RateLimitService extends Core.Service {
 	}
 
 	getRateLimitCookie(cookies: Core.Cookies) {
-		return cookies.getValue(this.rateLimitCookie);
+		return cookies.get(this.rateLimitCookie);
 	}
 
 	setRateLimitCookie(cookies: Core.Cookies) {
@@ -110,7 +110,7 @@ export class RateLimitService extends Core.Service {
 			value,
 			httpOnly: true,
 			secure: true,
-			sameSite: "None",
+			sameSite: "none",
 			path: "/",
 			maxAge: 365 * 24 * 3600,
 		});
