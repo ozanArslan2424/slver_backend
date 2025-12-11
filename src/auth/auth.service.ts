@@ -118,7 +118,6 @@ export class AuthService extends Core.Service {
 	}
 
 	setRefreshCookie(cookies: Core.Cookies, token: string) {
-		const domain = new URL(Config.get("CLIENT_URL")).hostname;
 		cookies.set({
 			name: this.authCookie,
 			value: token,
@@ -127,7 +126,6 @@ export class AuthService extends Core.Service {
 			sameSite: "None",
 			path: "/",
 			secure: true,
-			domain,
 		});
 	}
 
