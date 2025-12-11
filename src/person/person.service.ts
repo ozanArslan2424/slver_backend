@@ -1,13 +1,14 @@
 import { Core } from "@/lib/core.namespace";
 import type { DBService } from "@/db/db.service";
 import type { PersonCreateData, PersonData } from "@/person/person.schema";
+import type { TransactionClient } from "@/db/db.schema";
 
 export class PersonService extends Core.Service {
 	constructor(private readonly db: DBService) {
 		super();
 	}
 
-	private include: {
+	include: {
 		memberships: { include: { group: true }; omit: { password: true } };
 	} = {
 		memberships: { include: { group: true }, omit: { password: true } },
@@ -43,8 +44,9 @@ export class PersonService extends Core.Service {
 		});
 	}
 
-	async create(body: PersonCreateData) {
-		return await this.db.person.create({
+	async create(body: PersonCreateData, tx?: TransactionClient) {
+		const client = tx ?? this.db;
+		return await client.person.create({
 			data: { userId: body.userId, email: body.email, name: body.name },
 			include: this.include,
 		});

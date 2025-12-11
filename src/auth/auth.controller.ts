@@ -1,4 +1,10 @@
-import { AuthResponseSchema, LoginSchema, ProfileSchema, RegisterSchema } from "@/auth/auth.schema";
+import {
+	AuthResponseSchema,
+	LoginSchema,
+	ProfileSchema,
+	RefreshSchema,
+	RegisterSchema,
+} from "@/auth/auth.schema";
 import type { AuthService } from "@/auth/auth.service";
 import { Core } from "@/lib/core.namespace";
 
@@ -20,7 +26,7 @@ export class AuthController extends Core.Controller {
 		{ method: "POST", path: "/login" },
 		async (c) => {
 			const body = await c.body();
-			return await this.authService.login(body, c.cookies);
+			return await this.authService.login(body);
 		},
 		{ body: LoginSchema, response: AuthResponseSchema },
 	);
@@ -29,20 +35,26 @@ export class AuthController extends Core.Controller {
 		{ method: "POST", path: "/register" },
 		async (c) => {
 			const body = await c.body();
-			return await this.authService.register(body, c.cookies);
+			return await this.authService.register(body);
 		},
 		{ response: AuthResponseSchema, body: RegisterSchema },
 	);
 
-	logout = this.route({ method: "POST", path: "/logout" }, async (c) => {
-		this.authService.logout(c.cookies);
-	});
+	logout = this.route(
+		{ method: "POST", path: "/logout" },
+		async (c) => {
+			const body = await c.body();
+			this.authService.logout(body);
+		},
+		{ body: RefreshSchema },
+	);
 
 	refresh = this.route(
 		{ method: "POST", path: "/refresh" },
 		async (c) => {
-			return await this.authService.refresh(c.req, c.cookies);
+			const body = await c.body();
+			return await this.authService.refresh(body);
 		},
-		{ response: AuthResponseSchema },
+		{ response: AuthResponseSchema.omit({ profile: true }), body: RefreshSchema },
 	);
 }

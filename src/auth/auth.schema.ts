@@ -16,9 +16,16 @@ export const RegisterSchema = z.object({
 
 export type RegisterData = z.infer<typeof RegisterSchema>;
 
+export const RefreshSchema = z.object({
+	refreshToken: z.string().optional(),
+});
+
+export type RefreshData = z.infer<typeof RefreshSchema>;
+
 export const AuthResponseSchema = z.object({
 	profile: PersonDataSchema,
 	accessToken: z.string(),
+	refreshToken: z.string(),
 });
 
 export type AuthResponseData = z.infer<typeof AuthResponseSchema>;

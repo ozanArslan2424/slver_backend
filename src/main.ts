@@ -24,7 +24,7 @@ async function main() {
 	const errorService = new ErrorService(logger, languageService);
 	const personService = new PersonService(db);
 	const authService = new AuthService(db, personService);
-	const rateLimitService = new RateLimitService(logger, authService);
+	const rateLimitService = new RateLimitService(logger, authService, false);
 	const mailService = new MailService(logger, languageService);
 	const groupService = new GroupService(db, authService, personService, mailService);
 	const seenStatusService = new SeenStatusService(db, authService);

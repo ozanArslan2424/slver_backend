@@ -6,11 +6,10 @@ import type { LoggerService } from "@/logger/logger.service";
 import type { RateLimitEntry } from "@/rate-limit/rate-limit.schema";
 
 export class RateLimitService extends Core.Service {
+	readonly rateLimitHeader = "x-rl";
 	readonly rateLimitCookie = "__rlid";
 	readonly rlWindow = 60_000; // 1 minute
-	readonly rlMax = 60; // 1 per minute
 	readonly rlSaltRotate = 24 * 3600 * 1000; // daily
-	readonly rateLimitHeader = "x-rl";
 
 	private readonly store = new Map<string, RateLimitEntry>();
 	private storedSalt: string;
@@ -19,23 +18,28 @@ export class RateLimitService extends Core.Service {
 	constructor(
 		private readonly logger: LoggerService,
 		private readonly authService: AuthService,
+		private readonly cookiesEnabled?: boolean,
 	) {
 		super();
 		this.storedSalt = Encrypt.getRandomBytes();
 		this.saltRotatesAt = Date.now() + this.rlSaltRotate;
 	}
 
+	private getMax(id: string) {
+		if (id.startsWith("u:")) return 60;
+		if (id.startsWith("c:")) return 60;
+		if (id.startsWith("i:")) return 120; // Higher for IP-based (shared IPs)
+		if (id.startsWith("f:")) return 30; // Lower for anonymous
+		return 30;
+	}
+
 	middleware = this.makeMiddlewareHandler(async (c) => {
-		const authId = this.getAuthId(c.headers);
-		const cookieId = this.getCookieId(c.req);
-		const ipId = this.getIpId(c.headers);
-
-		let id = authId || cookieId || ipId;
-
-		if (!TXT.isDefined(id)) {
-			const cookieValue = this.setRateLimitCookie(c.cookies);
-			id = `c:${cookieValue}`;
+		// about every 1000 requests
+		if (Math.random() < 0.001) {
+			this.cleanupStore();
 		}
+
+		const id = this.getId(c.req, c.headers, c.cookies);
 
 		const now = Date.now();
 
@@ -47,16 +51,96 @@ export class RateLimitService extends Core.Service {
 			this.store.set(id, entry);
 		}
 
-		const allowed = entry.hits <= this.rlMax;
-		const remaining = Math.max(0, this.rlMax - entry.hits);
+		const max = this.getMax(id);
+		const allowed = entry.hits <= max;
+		const remaining = Math.max(0, max - entry.hits);
 
-		this.setRateLimitHeader(c.headers, entry.resetAt, remaining);
+		const resetUnix = Math.ceil(entry.resetAt / 1000);
+		const value = `limit=${max}, remaining=${remaining}, reset=${resetUnix}`;
+		c.headers.set(this.rateLimitHeader, value);
 
 		if (!allowed) {
 			this.logger.error("RATE_LIMIT_HIT", { id, timestamp: Date.now() });
 			throw new Core.Error("Too many requests", Core.Status.TOO_MANY_REQUESTS);
 		}
 	});
+
+	private getId(req: Core.Request, headers: Core.Headers, cookies: Core.Cookies) {
+		const authValue = this.authService.getAccessToken(headers);
+		if (TXT.isDefined(authValue)) {
+			// JWT
+			return `u:${this.hash(authValue)}`;
+		}
+
+		if (this.cookiesEnabled) {
+			const cookieValue = req.cookies.get(this.rateLimitCookie);
+			if (TXT.isDefined(cookieValue)) {
+				// COOKIE
+				return `c:${cookieValue}`;
+			}
+
+			const newCookieValue = Encrypt.uuid();
+			cookies.set({
+				name: this.rateLimitCookie,
+				value: newCookieValue,
+				httpOnly: true,
+				secure: true,
+				sameSite: "none",
+				path: "/",
+				maxAge: 365 * 24 * 3600,
+			});
+			// COOKIE
+			return `c:${newCookieValue}`;
+		} else {
+			const ipValue =
+				headers.get("cf-connecting-ip") ||
+				headers.get("x-real-ip") ||
+				headers.get("x-forwarded-for")?.split(",").shift()?.trim();
+
+			if (this.isValidIp(ipValue)) {
+				// IP
+				return `i:${this.hash(ipValue + this.salt())}`;
+			}
+
+			const parts = [
+				headers.get("user-agent") || "no-ua",
+				headers.get("accept-language") || "no-lang",
+				headers.get("accept-encoding") || "no-enc",
+			];
+
+			// FINGERPRINT
+			return `f:${this.hash(parts.join("|") + this.salt())}`;
+		}
+	}
+
+	private isValidIp(ip: string | undefined): boolean {
+		if (!TXT.isDefined(ip)) return false;
+
+		// IPv4
+		if (/^(\d{1,3}\.){3}\d{1,3}$/.test(ip)) {
+			// Validate octets (1-255)
+			const octets = ip.split(".");
+			return octets.every((octet) => {
+				const num = parseInt(octet, 10);
+				return num >= 0 && num <= 255 && octet === num.toString();
+			});
+		}
+
+		// IPv6 (simplified)
+		if (/^([0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}$/.test(ip)) {
+			return true;
+		}
+
+		// IPv6 compressed
+		if (
+			/^::([0-9a-fA-F]{1,4}:){0,6}[0-9a-fA-F]{1,4}$/.test(ip) ||
+			/^([0-9a-fA-F]{1,4}:){1,7}:$/.test(ip)
+		) {
+			return true;
+		}
+
+		return false;
+	}
 
 	private hash(data: string): string {
 		return Encrypt.sha256(data).slice(0, 16);
@@ -70,49 +154,12 @@ export class RateLimitService extends Core.Service {
 		return this.storedSalt;
 	}
 
-	private getAuthId(headers: Core.Headers) {
-		const authHeader = this.authService.getAccessToken(headers);
-		if (!authHeader) return null;
-		const token = authHeader.slice(7);
-		return `u:${this.hash(token)}`;
-	}
-
-	private getCookieId(req: Core.Request) {
-		const cookieValue = req.cookies.get(this.rateLimitCookie);
-		if (!cookieValue || typeof cookieValue !== "string") return null;
-		return `c:${cookieValue}`;
-	}
-
-	private getIpId(headers: Core.Headers) {
-		const ip =
-			headers.get("cf-connecting-ip") ||
-			headers.get("x-real-ip") ||
-			headers.get("x-forwarded-for")?.split(",").shift()?.trim() ||
-			"unknown";
-		return `i:${this.hash(ip + this.salt())}`;
-	}
-
-	setRateLimitHeader(headers: Core.Headers, resetAt: number, remaining: number) {
-		const resetUnix = Math.ceil(resetAt / 1000);
-		const value = `limit=${this.rlMax}, remaining=${remaining}, reset=${resetUnix}`;
-		headers.set(this.rateLimitHeader, value);
-	}
-
-	getRateLimitCookie(cookies: Core.Cookies) {
-		return cookies.get(this.rateLimitCookie);
-	}
-
-	setRateLimitCookie(cookies: Core.Cookies) {
-		const value = Encrypt.uuid();
-		cookies.set({
-			name: this.rateLimitCookie,
-			value,
-			httpOnly: true,
-			secure: true,
-			sameSite: "none",
-			path: "/",
-			maxAge: 365 * 24 * 3600,
-		});
-		return value;
+	private cleanupStore() {
+		const now = Date.now();
+		for (const [id, entry] of this.store.entries()) {
+			if (entry.resetAt <= now) {
+				this.store.delete(id);
+			}
+		}
 	}
 }

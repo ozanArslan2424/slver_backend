@@ -2,7 +2,7 @@ import { Help } from "@/lib/help.namespace";
 
 export namespace TXT {
 	export function isDefined(input: string | undefined | null): input is string {
-		return !!input?.trim();
+		return !!input?.trim() && typeof input === "string";
 	}
 
 	export function extract(delimiters: string, input: string): string {
@@ -69,6 +69,11 @@ export namespace TXT {
 	}
 
 	export function capitalize(input: string): string {
-		return input.length > 0 ? input.charAt(0).toLocaleUpperCase() + input.slice(1) : input;
+		return input.length > 0
+			? input
+					.split(" ")
+					.map((part) => part.charAt(0).toLocaleUpperCase() + input.slice(1))
+					.join(" ")
+			: input;
 	}
 }

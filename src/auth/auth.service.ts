@@ -1,4 +1,5 @@
-import type { LoginData, RegisterData } from "@/auth/auth.schema";
+import type { LoginData, RefreshData, RegisterData } from "@/auth/auth.schema";
+import type { TransactionClient } from "@/db/db.schema";
 import type { DBService } from "@/db/db.service";
 import { Config } from "@/lib/config.namespace";
 import { Core } from "@/lib/core.namespace";
@@ -10,7 +11,6 @@ export class AuthService extends Core.Service {
 	readonly jwtRefreshSecret = Config.get("JWT_REFRESH_SECRET");
 	readonly jwtAccessSecret = Config.get("JWT_ACCESS_SECRET");
 	readonly authHeader = "authorization";
-	readonly authCookie = "arc";
 
 	constructor(
 		private readonly db: DBService,
@@ -24,113 +24,117 @@ export class AuthService extends Core.Service {
 		return await this.guard(payload);
 	}
 
-	async guard(payload: Encrypt.JwtPayload) {
-		const user = await this.db.user.findUnique({
-			where: { id: payload.userId },
-			select: { emailVerified: true },
-		});
-		if (!user) {
-			console.log("!user");
-			throw new Core.Error("UNAUTHORIZED", Core.Status.UNAUTHORIZED);
-		}
-		const profile = await this.personService.getByUserId(payload.userId);
-		if (!profile) {
-			console.log("!profile");
-			throw new Core.Error("UNAUTHORIZED", Core.Status.UNAUTHORIZED);
-		}
-		return { ...profile, emailVerified: user.emailVerified };
-	}
-
-	async login(body: LoginData, cookies: Core.Cookies) {
-		const user = await this.db.user.findUnique({
-			where: { email: body.email },
-		});
+	async login(body: LoginData) {
+		const user = await this.db.user.findUnique({ where: { email: body.email } });
 		if (!user) {
 			throw new Core.Error("auth.invalid", Core.Status.BAD_REQUEST);
 		}
+
 		const pwdMatch = await Encrypt.verifyPassword(body.password, user.password);
 		if (!pwdMatch) {
 			throw new Core.Error("auth.invalid", Core.Status.BAD_REQUEST);
 		}
+
 		const profile = await this.personService.getByUserId(user.id);
 		if (!profile) {
 			throw new Core.Error("auth.invalid", Core.Status.BAD_REQUEST);
 		}
-		const refreshToken = this.signRefreshToken(profile.userId);
-		this.setRefreshCookie(cookies, refreshToken);
+
+		const refreshToken = await this.signRefreshToken(user.id);
+
 		const accessToken = this.signAccessToken(profile.userId);
-		return { profile, accessToken };
+
+		return { profile, accessToken, refreshToken };
 	}
 
-	async register(body: RegisterData, cookies: Core.Cookies) {
-		const password = await Encrypt.hashPassword(body.password);
-		const exists = await this.db.user.findUnique({
-			where: { email: body.email },
-		});
+	async register(body: RegisterData) {
+		const exists = await this.db.user.findUnique({ where: { email: body.email } });
 		if (exists) {
 			throw new Core.Error("auth.registerExists", Core.Status.BAD_REQUEST);
 		}
-		const oneHourFromNow = new Date(Date.now() + 60 * 60 * 1000);
-		const otp = Help.generateOTP();
-		const user = await this.db.user.create({
-			data: {
-				password,
-				email: body.email,
-				verifications: {
-					create: {
-						expiresAt: oneHourFromNow,
-						value: otp,
-						variant: "email",
+
+		return await this.db.$transaction(async (tx) => {
+			const email = body.email;
+			const name = body.name;
+			const password = await Encrypt.hashPassword(body.password);
+
+			const verificationExpiresAt = new Date(Date.now() + Help.milliseconds["1h"]);
+			const otp = Help.generateOTP();
+
+			const user = await tx.user.create({
+				data: {
+					password,
+					email,
+					verifications: {
+						create: { expiresAt: verificationExpiresAt, value: otp, variant: "email" },
 					},
 				},
+			});
+			const profile = await this.personService.create({ email, name, userId: user.id }, tx);
+			const refreshToken = await this.signRefreshToken(user.id, tx);
+			const accessToken = this.signAccessToken(user.id);
+			return { profile, accessToken, refreshToken };
+		});
+	}
+
+	async guard(payload: Encrypt.JwtPayload) {
+		const user = await this.db.user.findUnique({
+			where: { id: payload.userId },
+			include: { profile: { include: this.personService.include } },
+		});
+		if (!user || !user.profile) {
+			console.log("!user");
+			throw new Core.Error("UNAUTHORIZED", Core.Status.UNAUTHORIZED);
+		}
+
+		return { ...user.profile, emailVerified: user.emailVerified };
+	}
+
+	async refresh(body: RefreshData) {
+		const payload = this.getRefreshPayload(body.refreshToken);
+		const token = await this.db.refreshToken.findUnique({
+			where: {
+				id: payload.jti,
+				userId: payload.userId,
+				isValid: true,
+				expiresAt: { gt: new Date() },
 			},
+			include: { user: true },
 		});
-		const profile = await this.personService.create({
-			userId: user.id,
-			email: body.email,
-			name: body.name,
-		});
-		const refreshToken = this.signRefreshToken(profile.userId);
-		this.setRefreshCookie(cookies, refreshToken);
-		const accessToken = this.signAccessToken(profile.userId);
-		return { profile, accessToken };
+		if (!token || !token.user) {
+			throw new Core.Error("Invalid refresh token", Core.Status.BAD_REQUEST);
+		}
+
+		await this.db.refreshToken.update({ where: { id: payload.jti }, data: { isValid: false } });
+		const refreshToken = await this.signRefreshToken(token.userId);
+		const accessToken = this.signAccessToken(token.userId);
+		return { accessToken, refreshToken };
 	}
 
-	async refresh(req: Core.Request, cookies: Core.Cookies) {
-		const payload = this.getRefreshPayload(req);
-		const profile = await this.guard(payload);
-		const refreshToken = this.signRefreshToken(profile.userId);
-		this.setRefreshCookie(cookies, refreshToken);
-		const accessToken = this.signAccessToken(profile.userId);
-		return { profile, accessToken };
+	async logout(body: RefreshData) {
+		try {
+			const payload = this.getRefreshPayload(body.refreshToken);
+			await this.db.refreshToken.update({
+				where: { id: payload.jti, userId: payload.userId, isValid: true },
+				data: { isValid: false },
+			});
+		} catch {
+			// already invalid do nothing
+		}
 	}
 
-	async logout(cookies: Core.Cookies) {
-		cookies.delete(this.authCookie, {
-			path: "/",
+	async signRefreshToken(userId: string, tx?: TransactionClient) {
+		const client = tx ?? this.db;
+		const expiresIn = Help.milliseconds["7d"];
+		const { id } = await client.refreshToken.create({
+			data: { userId, expiresAt: new Date(Date.now() + expiresIn), isValid: true },
+			select: { id: true },
 		});
+		const refreshToken = Encrypt.signJwt({ userId, jti: id }, this.jwtRefreshSecret, { expiresIn });
+		return refreshToken;
 	}
 
-	signRefreshToken(userId: string) {
-		return Encrypt.signJwt({ userId }, this.jwtRefreshSecret, {
-			expiresIn: Help.milliseconds["7d"],
-		});
-	}
-
-	setRefreshCookie(cookies: Core.Cookies, token: string) {
-		cookies.set({
-			name: this.authCookie,
-			value: token,
-			httpOnly: true,
-			expires: new Date(Date.now() + Help.milliseconds["7d"]),
-			sameSite: "none",
-			path: "/",
-			secure: true,
-		});
-	}
-
-	getRefreshPayload(req: Core.Request): Encrypt.JwtPayload {
-		const refreshToken = req.cookies.get(this.authCookie);
+	getRefreshPayload(refreshToken: string | undefined): Encrypt.JwtPayload {
 		if (!refreshToken) {
 			console.log("!refreshToken");
 			throw new Core.Error("UNAUTHORIZED", Core.Status.UNAUTHORIZED);
@@ -166,5 +170,16 @@ export class AuthService extends Core.Service {
 		} catch {
 			throw new Core.Error("Invalid access token", Core.Status.BAD_REQUEST);
 		}
+	}
+
+	async cleanupExpiredTokens() {
+		await this.db.refreshToken.deleteMany({
+			where: {
+				OR: [
+					{ expiresAt: { lt: new Date() } }, // Expired
+					{ isValid: false }, // Or already invalidated
+				],
+			},
+		});
 	}
 }

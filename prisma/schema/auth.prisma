@@ -9,6 +9,7 @@ model User {
 
     profile       Person?        @relation("user_person")
     verifications Verification[] @relation("user_verification")
+    refreshTokens RefreshToken[] @relation("user_refresh_token")
 
     @@map("user")
 }
@@ -26,4 +27,16 @@ model Verification {
     user   User   @relation("user_verification", fields: [userId], references: [id])
 
     @@map("verification")
+}
+
+model RefreshToken {
+    id        String   @id @default(uuid())
+    userId    String
+    user      User     @relation("user_refresh_token", references: [id], fields: [userId])
+    isValid   Boolean  @default(true)
+    expiresAt DateTime
+
+    @@index([userId])
+    @@index([expiresAt])
+    @@map("refresh_token")
 }
