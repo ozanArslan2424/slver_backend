@@ -16,6 +16,8 @@ import { SeenStatusController } from "@/seen-status/seen-status.controller";
 import { SeenStatusService } from "@/seen-status/seen-status.service";
 import { ThingController } from "@/thing/thing.controller";
 import { ThingService } from "@/thing/thing.service";
+import otpHtml from "@/mail/templates/otp.html";
+import otpTxt from "@/mail/templates/otp.txt";
 
 async function main() {
 	const logger = new LoggerService();
@@ -25,7 +27,10 @@ async function main() {
 	const personService = new PersonService(db);
 	const authService = new AuthService(db, personService);
 	const rateLimitService = new RateLimitService(logger, authService, false);
-	const mailService = new MailService(logger, languageService);
+	const mailService = new MailService(logger, languageService, {
+		"otp.html": otpHtml,
+		"otp.txt": otpTxt,
+	});
 	const groupService = new GroupService(db, authService, personService, mailService);
 	const seenStatusService = new SeenStatusService(db, authService);
 	const thingService = new ThingService(db, authService, groupService, seenStatusService);

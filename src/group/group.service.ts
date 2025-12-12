@@ -7,6 +7,7 @@ import type {
 	GroupJoinData,
 	GroupRemoveData,
 } from "@/group/group.schema";
+import { Config } from "@/lib/config.namespace";
 import { Core } from "@/lib/core.namespace";
 import { Encrypt } from "@/lib/encrypt.namespace";
 import { Help } from "@/lib/help.namespace";
@@ -176,12 +177,29 @@ export class GroupService extends Core.Service {
 			select: { group: true },
 		});
 
-		await this.mailService.sendGroupInviteMail({
-			groupName: membership.group.title,
-			invitedByName: profile.name,
+		const appName = Config.get("APP_NAME");
+
+		await this.mailService.sendMail({
 			toEmail: person.email,
 			toName: person.name,
-			otpCode: generatedPassword,
+			htmlTemplateName: "otp.html",
+			textTemplateName: "otp.txt",
+			translator: "otp",
+			subject: (t) => t("subject", { appName }),
+			variables: (t) => ({
+				subject: t("subject", { appName }),
+				appName,
+				title: t("title"),
+				description: t("description", {
+					invitedByName: profile.name,
+					groupName: membership.group.title,
+				}),
+				otpTitle: t("otpTitle"),
+				otpCode: generatedPassword,
+				otpExpire: t("otpExpire"),
+				notMe: t("notMe"),
+				rights: t("rights"),
+			}),
 		});
 	}
 

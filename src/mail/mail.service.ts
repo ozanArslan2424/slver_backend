@@ -3,41 +3,31 @@ import nodemailer from "nodemailer";
 import type { LanguageService } from "@/language/language.service";
 import { Core } from "@/lib/core.namespace";
 import { Config } from "@/lib/config.namespace";
-import otpHtml from "./templates/otp.html";
-import otpTxt from "./templates/otp.txt";
+import type { Translator } from "@/language/language.schema";
 
 export class MailService extends Core.Service {
-	private readonly appName = Config.get("APP_NAME");
-	private readonly mailHost = Config.get("SMTP_HOST");
-	private readonly mailPort = Config.get("SMTP_PORT", {
-		parser: parseInt,
-		fallback: 587,
-	});
-	private readonly mailUser = Config.get("SMTP_USER");
-	private readonly mailPass = Config.get("SMTP_PASS");
 	private transporter: nodemailer.Transporter;
 
 	constructor(
 		private readonly logger: LoggerService,
 		private readonly languageService: LanguageService,
+		private readonly templates: Record<string, any>,
 	) {
 		super();
 		this.transporter = this.createTransporter();
 	}
 
-	readonly templates: Record<string, any> = {
-		"otp.html": otpHtml,
-		"otp.txt": otpTxt,
-	};
-
 	private createTransporter() {
 		return nodemailer.createTransport({
-			host: this.mailHost,
-			port: this.mailPort,
+			host: Config.get("SMTP_HOST"),
+			port: Config.get("SMTP_PORT", {
+				parser: parseInt,
+				fallback: 587,
+			}),
 			secure: false,
 			auth: {
-				user: this.mailUser,
-				pass: this.mailPass,
+				user: Config.get("SMTP_USER"),
+				pass: Config.get("SMTP_PASS"),
 			},
 			tls: {
 				rejectUnauthorized: false,
@@ -51,44 +41,14 @@ export class MailService extends Core.Service {
 			return true;
 		} catch (error) {
 			this.logger.error("Transporter not verified", {
-				user: this.mailUser,
+				user: Config.get("SMTP_USER"),
 				error,
 			});
 			return false;
 		}
 	}
 
-	async sendMail({
-		toName,
-		toEmail,
-		subject,
-		text,
-		html,
-	}: {
-		toName: string;
-		toEmail: string;
-		subject: string;
-		text: string;
-		html?: string;
-	}) {
-		const verified = await this.verify();
-		if (!verified) return;
-
-		const info = await this.transporter.sendMail({
-			from: `"${this.appName}" <${this.mailUser}>`,
-			to: `"${toName || ""}" <${toEmail}>`,
-			subject: subject,
-			text: text,
-			html: html ? html : "",
-		});
-
-		this.logger.log("Message Sent", info);
-		return info;
-	}
-
 	async loadTemplate(fileName: string, variables: Record<string, string> = {}) {
-		// const address = path.join(__dirname, "templates", fileName);
-		// let template = await Read.jsonFile(address);
 		let template = this.templates[fileName];
 		Object.keys(variables).forEach((key) => {
 			template = template.replace(new RegExp(`{{${key}}}`, "g"), variables[key]!);
@@ -96,35 +56,39 @@ export class MailService extends Core.Service {
 		return template;
 	}
 
-	async sendGroupInviteMail({
+	async sendMail({
 		toName,
 		toEmail,
-		invitedByName,
-		groupName,
-		otpCode,
+		subject,
+		htmlTemplateName,
+		textTemplateName,
+		translator,
+		variables,
 	}: {
-		invitedByName: string;
 		toEmail: string;
 		toName: string;
-		groupName: string;
-		otpCode: string;
+		translator: string;
+		htmlTemplateName?: string;
+		textTemplateName: string;
+		subject: (t: Translator) => string;
+		variables: (t: Translator) => Record<string, string>;
 	}) {
-		const t = await this.languageService.makeTranslator("otp");
-		const subject = t("subject", { appName: this.appName });
-		const variables = {
-			subject,
-			appName: this.appName,
-			title: t("title"),
-			description: t("description", { invitedByName, groupName }),
-			otpTitle: t("otpTitle"),
-			otpCode,
-			otpExpire: t("otpExpire"),
-			notMe: t("notMe"),
-			rights: t("rights"),
-		};
-		const html = await this.loadTemplate("otp.html", variables);
-		const text = await this.loadTemplate("otp.txt", variables);
+		const t = await this.languageService.makeTranslator(translator);
+		const html = htmlTemplateName ? await this.loadTemplate(htmlTemplateName, variables(t)) : "";
+		const text = await this.loadTemplate(textTemplateName, variables(t));
 
-		await this.sendMail({ toEmail, toName, subject, html, text });
+		const verified = await this.verify();
+		if (!verified) return;
+
+		const info = await this.transporter.sendMail({
+			from: `"${Config.get("APP_NAME")}" <${Config.get("SMTP_USER")}>`,
+			to: `"${toName || ""}" <${toEmail}>`,
+			subject: subject(t),
+			text,
+			html,
+		});
+
+		this.logger.log("Message Sent", info);
+		return info;
 	}
 }
