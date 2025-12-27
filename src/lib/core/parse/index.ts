@@ -11,6 +11,16 @@ export type __Core_ParseFn = <Schema extends unknown>(
 	errorMessage: string,
 ) => Schema;
 
+export type __Core_InferSchema<T> = T extends { infer: infer U }
+	? U // For ArkType-like schemas
+	: T extends { _type: infer U }
+		? U // For other libraries
+		: T extends { parse: (input: any) => infer U }
+			? U // For parsers
+			: T extends { _output: infer U }
+				? U // For Zod-like
+				: never;
+
 export const __Core_parse: __Core_ParseFn = (data, schema, errorMessage) => {
 	switch (true) {
 		case schema instanceof __Core_ArkTypeSchemaType:

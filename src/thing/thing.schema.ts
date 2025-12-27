@@ -1,57 +1,55 @@
+import type { Core } from "@/lib/core.namespace";
 import { PersonSchema } from "@/person/person.schema";
-import z from "zod";
+import { type } from "arktype";
 
-export const ThingSchema = z.object({
-	id: z.number(),
-	createdAt: z.date(),
-	updatedAt: z.date(),
-	content: z.string(),
-	isDone: z.boolean(),
-	doneDate: z.date().nullable(),
-	dueDate: z.date().nullable(),
-	assignedToId: z.number().nullable(),
-	createdById: z.number(),
-	groupId: z.number().nullable(),
+export const ThingSchema = type({
+	id: "number",
+	createdAt: "Date",
+	updatedAt: "Date",
+	content: "string",
+	isDone: "boolean",
+	doneDate: "Date | null",
+	dueDate: "Date | null",
+	assignedToId: "number | null",
+	createdById: "number",
+	groupId: "number | null",
 });
 
-export const ThingDataSchema = ThingSchema.extend({
-	assignedTo: PersonSchema.nullable(),
+export const ThingDataSchema = ThingSchema.and({
+	assignedTo: type.or(PersonSchema, "null"),
 });
 
-export type ThingData = z.infer<typeof ThingDataSchema>;
+export type ThingData = Core.InferSchema<typeof ThingDataSchema>;
 
-export const ThingCreateDataSchema = z.object({
-	content: z.string().min(1, "Everything must have some content"),
-	dueDate: z
-		.string()
-		.nullable()
-		.transform((v) => (v ? new Date(v) : null)),
+export const ThingCreateDataSchema = type({
+	content: "string > 1",
+	dueDate: type("string | null"),
 });
 
-export type ThingCreateData = z.infer<typeof ThingCreateDataSchema>;
+export type ThingCreateData = Core.InferSchema<typeof ThingCreateDataSchema>;
 
-export const ThingUpdateDataSchema = ThingCreateDataSchema.extend({
-	thingId: z.number(),
+export const ThingUpdateDataSchema = ThingCreateDataSchema.and({
+	thingId: "number",
 });
 
-export type ThingUpdateData = z.infer<typeof ThingUpdateDataSchema>;
+export type ThingUpdateData = Core.InferSchema<typeof ThingUpdateDataSchema>;
 
-export const ThingAssignDataSchema = z.object({
-	thingId: z.number(),
-	personId: z.number(),
+export const ThingAssignDataSchema = type({
+	thingId: "number",
+	personId: "number",
 });
 
-export type ThingAssignData = z.infer<typeof ThingAssignDataSchema>;
+export type ThingAssignData = Core.InferSchema<typeof ThingAssignDataSchema>;
 
-export const ThingRemoveDataSchema = z.object({
-	thingId: z.number(),
+export const ThingRemoveDataSchema = type({
+	thingId: "number",
 });
 
-export type ThingRemoveData = z.infer<typeof ThingRemoveDataSchema>;
+export type ThingRemoveData = Core.InferSchema<typeof ThingRemoveDataSchema>;
 
-export const ThingDoneDataSchema = z.object({
-	thingId: z.number(),
-	isDone: z.boolean(),
+export const ThingDoneDataSchema = type({
+	thingId: "number",
+	isDone: "boolean",
 });
 
-export type ThingDoneData = z.infer<typeof ThingDoneDataSchema>;
+export type ThingDoneData = Core.InferSchema<typeof ThingDoneDataSchema>;

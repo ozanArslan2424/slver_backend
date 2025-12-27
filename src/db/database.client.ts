@@ -1,7 +1,7 @@
 import { Config } from "@/lib/config.namespace";
 import type { Core } from "@/lib/core.namespace";
 import { Help } from "@/lib/help.namespace";
-import { Logger } from "@/logger/logger.service";
+import { Logger } from "@/logger/logger";
 import { PrismaNeon } from "@prisma/adapter-neon";
 import { PrismaClient } from "prisma/generated/client";
 

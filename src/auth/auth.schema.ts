@@ -1,48 +1,43 @@
+import type { Core } from "@/lib/core.namespace";
 import { PersonDataSchema } from "@/person/person.schema";
-import z from "zod";
+import { type } from "arktype";
 
-export const LoginSchema = z.object({
-	email: z.email(),
-	password: z.string().min(8),
+export const LoginSchema = type({
+	email: "string.email",
+	password: "string >= 8",
 });
 
-export type LoginData = z.infer<typeof LoginSchema>;
+export type LoginData = Core.InferSchema<typeof LoginSchema>;
 
-export const RegisterSchema = z.object({
-	name: z.string().min(1),
-	email: z.email(),
-	password: z.string().min(8),
+export const RegisterSchema = LoginSchema.and({
+	name: "string > 1",
 });
 
-export type RegisterData = z.infer<typeof RegisterSchema>;
+export type RegisterData = Core.InferSchema<typeof RegisterSchema>;
 
-export const VerifySchema = z.object({
-	email: z.email(),
-	code: z.string(),
+export const VerifySchema = type({
+	email: "string.email",
+	code: "string",
 });
 
-export type VerifyData = z.infer<typeof VerifySchema>;
+export type VerifyData = Core.InferSchema<typeof VerifySchema>;
 
-export const RefreshSchema = z.object({
-	refreshToken: z.string().optional(),
+export const RefreshSchema = type({
+	"refreshToken?": "string",
 });
 
-export type RefreshData = z.infer<typeof RefreshSchema>;
+export type RefreshData = Core.InferSchema<typeof RefreshSchema>;
 
-export const AuthResponseSchema = z.object({
+export const AuthResponseSchema = type({
 	profile: PersonDataSchema,
-	accessToken: z.string(),
-	refreshToken: z.string(),
+	accessToken: "string",
+	refreshToken: "string",
 });
 
-export type AuthResponseData = z.infer<typeof AuthResponseSchema>;
+export type AuthResponseData = Core.InferSchema<typeof AuthResponseSchema>;
 
-export const AuthCookieSchema = z.object({
-	auth: z.string().nullish(),
+export const ProfileSchema = PersonDataSchema.and({
+	emailVerified: "boolean",
 });
 
-export const ProfileSchema = PersonDataSchema.extend({
-	emailVerified: z.boolean(),
-});
-
-export type ProfileData = z.infer<typeof ProfileSchema>;
+export type ProfileData = Core.InferSchema<typeof ProfileSchema>;

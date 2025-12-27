@@ -1,4 +1,4 @@
-import { Logger } from "@/logger/logger.service";
+import { Logger } from "@/logger/logger";
 import nodemailer from "nodemailer";
 import type { LanguageClient } from "@/language/language.client";
 import { Config } from "@/lib/config.namespace";

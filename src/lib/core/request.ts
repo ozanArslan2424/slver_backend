@@ -23,8 +23,8 @@ export class __Core_Request extends Request {
 		this.parseCookies();
 	}
 
-	get isAllowedMethod() {
-		return Obj.values(__Core_Method).includes(this.method.toUpperCase() as __Core_Method);
+	get isMethodNotAllowed() {
+		return !Obj.values(__Core_Method).includes(this.method.toUpperCase() as __Core_Method);
 	}
 
 	get isPreflight() {

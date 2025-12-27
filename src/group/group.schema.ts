@@ -1,46 +1,45 @@
+import type { Core } from "@/lib/core.namespace";
+import { type } from "arktype";
 import { PersonRole, Status } from "prisma/generated/enums";
-import z from "zod";
 
-export const MembershipSchema = z.object({
-	role: z.enum(PersonRole),
-	status: z.enum(Status),
-	password: z.string(),
-	personId: z.number().int(),
-	groupId: z.number().int(),
+export const MembershipSchema = type({
+	role: type.valueOf(PersonRole),
+	status: type.valueOf(Status),
+	password: "string",
+	personId: "number",
+	groupId: "number",
 });
 
-export const GroupSchema = z.object({
-	id: z.number(),
-	createdAt: z.date(),
-	updatedAt: z.date(),
-	title: z.string(),
+export const GroupSchema = type({
+	id: "number",
+	createdAt: "Date",
+	updatedAt: "Date",
+	title: "string",
 });
 
-export const GroupDataSchema = GroupSchema;
+export type GroupData = Core.InferSchema<typeof GroupSchema>;
 
-export type GroupData = z.infer<typeof GroupDataSchema>;
-
-export const GroupCreateSchema = z.object({
-	title: z.string(),
+export const GroupCreateSchema = type({
+	title: "string",
 });
 
-export type GroupCreateData = z.infer<typeof GroupCreateSchema>;
+export type GroupCreateData = Core.InferSchema<typeof GroupCreateSchema>;
 
-export const GroupJoinSchema = z.object({
-	join: z.string().min(6),
+export const GroupJoinSchema = type({
+	join: "string > 6",
 });
 
-export type GroupJoinData = z.infer<typeof GroupJoinSchema>;
+export type GroupJoinData = Core.InferSchema<typeof GroupJoinSchema>;
 
-export const GroupInviteSchema = z.object({
-	email: z.email(),
-	role: z.enum(PersonRole),
+export const GroupInviteSchema = type({
+	email: "string.email",
+	role: type.valueOf(PersonRole),
 });
 
-export type GroupInviteData = z.infer<typeof GroupInviteSchema>;
+export type GroupInviteData = Core.InferSchema<typeof GroupInviteSchema>;
 
-export const GroupRemoveSchema = z.object({
-	personId: z.number(),
+export const GroupRemoveSchema = type({
+	personId: "number",
 });
 
-export type GroupRemoveData = z.infer<typeof GroupRemoveSchema>;
+export type GroupRemoveData = Core.InferSchema<typeof GroupRemoveSchema>;

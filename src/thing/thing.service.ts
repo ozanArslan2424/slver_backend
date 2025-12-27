@@ -33,7 +33,7 @@ export class ThingService extends Core.Service {
 			const isMember = membership && membership.status === Status.accepted;
 			const createdById = profile.id;
 			const content = body.content;
-			const dueDate = body.dueDate;
+			const dueDate = body.dueDate ? new Date(body.dueDate) : null;
 			const groupId = isMember ? membership.groupId : undefined;
 			const assignedToId = isMember ? undefined : profile.id;
 
@@ -56,7 +56,7 @@ export class ThingService extends Core.Service {
 		await this.authService.getProfile(headers);
 		const id = body.thingId;
 		const content = body.content;
-		const dueDate = body.dueDate;
+		const dueDate = body.dueDate ? new Date(body.dueDate) : null;
 		return await this.thingRepository.update(id, content, dueDate, null, null, null);
 	}
 

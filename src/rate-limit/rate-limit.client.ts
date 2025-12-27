@@ -1,7 +1,7 @@
 import { Core } from "@/lib/core.namespace";
 import { Encrypt } from "@/lib/encrypt.namespace";
 import { TXT } from "@/lib/txt.namespace";
-import { Logger } from "@/logger/logger.service";
+import { Logger } from "@/logger/logger";
 import type { RateLimitEntry } from "@/rate-limit/rate-limit.schema";
 
 export class RateLimitClient {

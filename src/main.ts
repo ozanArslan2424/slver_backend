@@ -62,7 +62,8 @@ async function main() {
 		seenStatusRepository,
 	);
 
-	const router = new Core.Router({
+	const server = new Core.Server({
+		db,
 		globalPrefix: "/api",
 		controllers: [
 			new AuthController(authService),
@@ -99,10 +100,7 @@ async function main() {
 		}),
 	});
 
-	const server = new Core.Server({ db, router });
-
-	server.setHostname("0.0.0.0");
-	server.listen(Config.get("PORT", { parser: parseInt, fallback: 3000 }));
+	server.listen(Config.get("PORT", { parser: parseInt, fallback: 3000 }), "0.0.0.0");
 }
 
 Help.perform(main);

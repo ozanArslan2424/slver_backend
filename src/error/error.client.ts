@@ -1,6 +1,6 @@
 import type { LanguageClient } from "@/language/language.client";
 import { Core } from "@/lib/core.namespace";
-import { Logger } from "@/logger/logger.service";
+import { Logger } from "@/logger/logger";
 import { Prisma } from "prisma/generated/client";
 
 export class ErrorClient {

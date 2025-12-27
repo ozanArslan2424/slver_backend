@@ -9,10 +9,10 @@ import { __Core_Headers } from "@/lib/core/headers";
 import { type __Core_Logger } from "@/lib/core/logger";
 import { __Core_Method } from "@/lib/core/method";
 import { __Core_Middleware } from "@/lib/core/middleware";
+import type { __Core_InferSchema } from "@/lib/core/parse";
 import { __Core_Request } from "@/lib/core/request";
 import { __Core_Response } from "@/lib/core/response";
 import { __Core_Route } from "@/lib/core/route";
-import { __Core_Router } from "@/lib/core/router";
 import { __Core_setRuntime } from "@/lib/core/runtime/set-runtime";
 import { __Core_Server } from "@/lib/core/server";
 import { __Core_Service } from "@/lib/core/service";
@@ -123,15 +123,10 @@ export namespace Core {
 	export type Controller = __Core_Controller;
 
 	/**
-	 * Router takes the routes, controllers, middlewares, and HTML bundles for static pages.
+	 * Server is the entrypoint to the app.
+	 * It takes the routes, controllers, middlewares, and HTML bundles for static pages.
 	 * A router instance must be passed to a {@link Server} to start listening.
 	 * At least one controller is required for middlewares to work.
-	 * */
-	export const Router = __Core_Router;
-	export type Router = __Core_Router;
-
-	/**
-	 * Server is the entrypoint to the app. It needs a port and a {@link Router} to start listening.
 	 * You can pass a {@link DBClientInterface} instance to connect and disconnect.
 	 * You can pass your {@link Cors} object.
 	 * */
@@ -158,4 +153,5 @@ export namespace Core {
 
 	export interface DBClientInterface extends __Core_DBClientInterface {}
 	export interface Logger extends __Core_Logger {}
+	export type InferSchema<T> = __Core_InferSchema<T>;
 }

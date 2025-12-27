@@ -1,12 +1,11 @@
 import { Config } from "@/lib/config.namespace";
 import { Core } from "@/lib/core.namespace";
-import { LogLevel } from "@/logger/logger.schema";
 import winston from "winston";
 
 export class Logger implements Core.Logger {
 	private readonly isDevelopment = Config.isDev();
 	private readonly logLevel = Config.get("LOG_LEVEL", {
-		fallback: LogLevel.info,
+		fallback: "info",
 	});
 	private logger: winston.Logger;
 
@@ -15,16 +14,16 @@ export class Logger implements Core.Logger {
 	}
 
 	error(msg: string, ...args: any[]) {
-		this.logger.log(LogLevel.error, msg, ...args);
+		this.logger.log("error", msg, ...args);
 	}
 	warn(msg: string, ...args: any[]) {
-		this.logger.log(LogLevel.warn, msg, ...args);
+		this.logger.log("warn", msg, ...args);
 	}
 	log(msg: string, ...args: any[]) {
-		this.logger.log(LogLevel.info, msg, ...args);
+		this.logger.log("info", msg, ...args);
 	}
 	debug(msg: string, ...args: any[]) {
-		this.logger.log(LogLevel.debug, msg, ...args);
+		this.logger.log("debug", msg, ...args);
 	}
 
 	private createLogger(): winston.Logger {
@@ -55,7 +54,7 @@ export class Logger implements Core.Logger {
 			transports.push(
 				new winston.transports.File({
 					filename: "logs/error.log",
-					level: LogLevel.error,
+					level: "error",
 					format: winston.format.combine(winston.format.timestamp(), winston.format.json()),
 				}),
 				new winston.transports.File({
