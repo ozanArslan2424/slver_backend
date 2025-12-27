@@ -1,31 +1,18 @@
-import type { Adapter } from "@/lib/adapter.namespace";
 import { Config } from "@/lib/config.namespace";
 import { Core } from "@/lib/core.namespace";
-import { LogLevel, type RequestData } from "@/logger/logger.schema";
+import { LogLevel } from "@/logger/logger.schema";
 import winston from "winston";
 
-export class LoggerService extends Core.Service implements Core.Logger {
-	private readonly loggerEnabled = true;
+export class Logger extends Core.Service implements Core.Logger {
 	private readonly isDevelopment = Config.isDev();
 	private readonly logLevel = Config.get("LOG_LEVEL", {
 		fallback: LogLevel.info,
 	});
 	private logger: winston.Logger;
 
-	constructor() {
+	constructor(private readonly loggerEnabled?: boolean) {
 		super();
 		this.logger = this.createLogger();
-		// if (this.loggerEnabled) {
-		// 	this.error = console.error;
-		// 	this.warn = console.warn;
-		// 	this.log = console.log;
-		// 	this.debug = console.debug;
-		// } else {
-		// 	this.error = () => {};
-		// 	this.warn = () => {};
-		// 	this.log = () => {};
-		// 	this.debug = () => {};
-		// }
 	}
 
 	error(msg: string, ...args: any[]) {
@@ -39,33 +26,6 @@ export class LoggerService extends Core.Service implements Core.Logger {
 	}
 	debug(msg: string, ...args: any[]) {
 		this.logger.log(LogLevel.debug, msg, ...args);
-	}
-
-	middleware = this.makeMiddlewareHandler((c) => {
-		const isOpenAPIRequest = c.url.origin.includes("ely.sia");
-		const path = c.url.pathname;
-
-		if (!isOpenAPIRequest) {
-			this.log(`[${c.req.method}] ${path}`);
-		}
-	});
-
-	onAfterResponse(requestData: RequestData) {
-		this.log(`[${requestData.method}] ${requestData.url}:`, {
-			id: requestData.id,
-			userAgent: requestData.userAgent,
-			time: `${Math.round(performance.now() - requestData.start)}ms`,
-		});
-	}
-
-	onError(error: Adapter.Error) {
-		if (error instanceof Core.Error) {
-			if (error.status >= 500) {
-				this.error(error.name, error);
-			}
-		} else {
-			this.error(error.name, error);
-		}
 	}
 
 	private createLogger(): winston.Logger {
@@ -110,7 +70,7 @@ export class LoggerService extends Core.Service implements Core.Logger {
 		return winston.createLogger({
 			level: this.logLevel,
 			transports,
-			silent: !this.loggerEnabled,
+			silent: this.loggerEnabled === false,
 		});
 	}
 

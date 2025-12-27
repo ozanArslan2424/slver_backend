@@ -3,13 +3,9 @@ import { Core } from "@/lib/core.namespace";
 import tr from "./tr";
 import en from "./en";
 
-export class LanguageService extends Core.Service {
+export class LanguageClient {
 	storedLanguage: string = "en";
 	readonly langHeader = "x-lang";
-
-	constructor() {
-		super();
-	}
 
 	readonly locales: Record<string, any> = {
 		"en-US": en,
@@ -18,9 +14,9 @@ export class LanguageService extends Core.Service {
 		tr: tr,
 	};
 
-	middleware = this.makeMiddlewareHandler((c) => {
-		this.storedLanguage = c.headers.get(this.langHeader) || "en";
-	});
+	storeLanguage(headers: Core.Headers) {
+		this.storedLanguage = headers.get(this.langHeader) || "en";
+	}
 
 	async makeTranslator(collection: string, options?: TranslatorOptions): Promise<Translator> {
 		const lang = options?.overrideLanguage ?? this.storedLanguage ?? "en";

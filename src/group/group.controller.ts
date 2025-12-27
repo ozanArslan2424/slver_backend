@@ -13,7 +13,13 @@ export class GroupController extends Core.Controller {
 		super("/group");
 	}
 
-	get = this.route({ method: "GET", path: "/" }, () => this.groupService.get());
+	get = this.route({ method: "GET", path: "/" }, async () => {
+		return await this.groupService.get();
+	});
+
+	list = this.route({ method: "GET", path: "/list" }, async (c) => {
+		return await this.groupService.list(c.headers);
+	});
 
 	personList = this.route(
 		{ method: "GET", path: "/person-list" },

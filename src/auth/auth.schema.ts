@@ -16,6 +16,13 @@ export const RegisterSchema = z.object({
 
 export type RegisterData = z.infer<typeof RegisterSchema>;
 
+export const VerifySchema = z.object({
+	email: z.email(),
+	code: z.string(),
+});
+
+export type VerifyData = z.infer<typeof VerifySchema>;
+
 export const RefreshSchema = z.object({
 	refreshToken: z.string().optional(),
 });

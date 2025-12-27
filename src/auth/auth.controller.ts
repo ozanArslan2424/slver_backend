@@ -4,6 +4,7 @@ import {
 	ProfileSchema,
 	RefreshSchema,
 	RegisterSchema,
+	VerifySchema,
 } from "@/auth/auth.schema";
 import type { AuthService } from "@/auth/auth.service";
 import { Core } from "@/lib/core.namespace";
@@ -35,9 +36,9 @@ export class AuthController extends Core.Controller {
 		{ method: "POST", path: "/register" },
 		async (c) => {
 			const body = await c.body();
-			return await this.authService.register(body);
+			await this.authService.register(body);
 		},
-		{ response: AuthResponseSchema, body: RegisterSchema },
+		{ body: RegisterSchema },
 	);
 
 	logout = this.route(
@@ -56,5 +57,14 @@ export class AuthController extends Core.Controller {
 			return await this.authService.refresh(body);
 		},
 		{ response: AuthResponseSchema.omit({ profile: true }), body: RefreshSchema },
+	);
+
+	verify = this.route(
+		{ method: "POST", path: "/verify" },
+		async (c) => {
+			const body = await c.body();
+			return await this.authService.verify(body);
+		},
+		{ body: VerifySchema, response: AuthResponseSchema },
 	);
 }

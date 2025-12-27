@@ -1,51 +1,87 @@
 import { AuthController } from "@/auth/auth.controller";
 import { AuthService } from "@/auth/auth.service";
-import { DBService } from "@/db/db.service";
-import { ErrorService } from "@/error/error.service";
+import { RefreshTokenRepository } from "@/refresh-token/refresh-token.repository";
+import { UserRepository } from "@/user/user.repository";
+import { VerificationTokenRepository } from "@/verification-token/verification-token.repository";
+import { DatabaseClient } from "@/db/database.client";
+import { ErrorClient } from "@/error/error.client";
 import { GroupController } from "@/group/group.controller";
+import { GroupRepository } from "@/group/group.repository";
 import { GroupService } from "@/group/group.service";
-import { LanguageService } from "@/language/language.service";
+import { MembershipRepository } from "@/membership/membership.repository";
+import { LanguageClient } from "@/language/language.client";
 import { Config } from "@/lib/config.namespace";
 import { Core } from "@/lib/core.namespace";
 import { Help } from "@/lib/help.namespace";
-import { LoggerService } from "@/logger/logger.service";
-import { MailService } from "@/mail/mail.service";
-import { PersonService } from "@/person/person.service";
-import { RateLimitService } from "@/rate-limit/rate-limit.service";
-import { SeenStatusController } from "@/seen-status/seen-status.controller";
-import { SeenStatusService } from "@/seen-status/seen-status.service";
+import { MailClient } from "@/mail/mail.client";
+import { PersonRepository } from "@/person/person.repository";
+import { RateLimitClient } from "@/rate-limit/rate-limit.client";
+import { SeenStatusRepository } from "@/seen-status/seen-status.repository";
 import { ThingController } from "@/thing/thing.controller";
+import { ThingRepository } from "@/thing/thing.repository";
 import { ThingService } from "@/thing/thing.service";
-import otpHtml from "@/mail/templates/otp.html";
-import otpTxt from "@/mail/templates/otp.txt";
 
 async function main() {
-	const logger = new LoggerService();
-	const db = new DBService(logger);
-	const languageService = new LanguageService();
-	const errorService = new ErrorService(logger, languageService);
-	const personService = new PersonService(db);
-	const authService = new AuthService(db, personService);
-	const rateLimitService = new RateLimitService(logger, authService, false);
-	const mailService = new MailService(logger, languageService, {
-		"otp.html": otpHtml,
-		"otp.txt": otpTxt,
+	const db = new DatabaseClient();
+	const languageClient = new LanguageClient();
+	const mailClient = new MailClient(languageClient);
+	const errorClient = new ErrorClient(languageClient);
+	const rateLimitClient = new RateLimitClient(false);
+
+	const personRepository = new PersonRepository(db);
+	const userRepository = new UserRepository(db);
+	const refreshTokenRepository = new RefreshTokenRepository(db);
+	const verificationTokenRepository = new VerificationTokenRepository(db);
+	const membershipRepository = new MembershipRepository(db);
+	const thingRepository = new ThingRepository(db);
+	const groupRepository = new GroupRepository(db);
+	const seenStatusRepository = new SeenStatusRepository(db);
+
+	const authService = new AuthService(
+		db,
+		userRepository,
+		refreshTokenRepository,
+		verificationTokenRepository,
+		personRepository,
+		mailClient,
+	);
+	const groupService = new GroupService(
+		personRepository,
+		membershipRepository,
+		groupRepository,
+		authService,
+		mailClient,
+	);
+	const thingService = new ThingService(
+		db,
+		authService,
+		groupService,
+		thingRepository,
+		seenStatusRepository,
+	);
+
+	const router = new Core.Router({
+		globalPrefix: "/api",
+		controllers: [
+			new AuthController(authService),
+			new ThingController(thingService),
+			new GroupController(groupService),
+		],
+		middlewares: [
+			new Core.Middleware((c) => {
+				console.log(`[${c.req.method}] ${c.url.pathname}`);
+			}),
+			new Core.Middleware((c) => {
+				languageClient.storeLanguage(c.headers);
+			}),
+			new Core.Middleware((c) => {
+				rateLimitClient.handler(c.req, c.headers, c.cookies);
+			}),
+		],
+
+		floatingRoutes: [new Core.Route("GET", "/health", () => "ok")],
+		onError: (err) => errorClient.handler(err),
 	});
-	const groupService = new GroupService(db, authService, personService, mailService);
-	const seenStatusService = new SeenStatusService(db, authService);
-	const thingService = new ThingService(db, authService, groupService, seenStatusService);
-
-	const healthRoute = new Core.Route("GET", "/health", () => "ok");
-
-	const authController = new AuthController(authService);
-	const thingController = new ThingController(thingService);
-	const groupController = new GroupController(groupService);
-	const seenStatusController = new SeenStatusController(seenStatusService);
-
-	const loggerMiddleware = new Core.Middleware(logger);
-	const groupMiddleware = new Core.Middleware(groupService);
-	const languageMiddleware = new Core.Middleware(languageService);
-	const rateLimitMiddleware = new Core.Middleware(rateLimitService);
 
 	const cors = new Core.Cors({
 		allowedOrigins: [
@@ -57,36 +93,18 @@ async function main() {
 			"Content-Type",
 			"Authorization",
 			groupService.groupIdHeader,
-			languageService.langHeader,
-			rateLimitService.rateLimitHeader,
+			languageClient.langHeader,
+			rateLimitClient.rateLimitHeader,
 		],
 		credentials: true,
 	});
 
-	const router = new Core.Router({
-		globalPrefix: "/api",
-		controllers: [authController, thingController, groupController, seenStatusController],
-		middlewares: [loggerMiddleware, groupMiddleware, languageMiddleware, rateLimitMiddleware],
-		floatingRoutes: [healthRoute],
-		onError: (err) => errorService.handler(err),
-	});
-
-	const server = new Core.Server({
-		db,
-		router,
-		logger,
-		cors,
-	});
-
-	const port = Config.get("PORT", {
-		parser: parseInt,
-		fallback: 3000,
-	});
+	const server = new Core.Server({ db, router, cors });
 
 	server.setHostname("0.0.0.0");
-	server.listen(port);
+	server.listen(Config.get("PORT", { parser: parseInt, fallback: 3000 }));
 
-	logger.log(`📡 Listening on ${server.hostname} ${server.port}`);
+	console.log(`📡 Listening on ${server.hostname}:${server.port}`);
 }
 
 Help.perform(main);

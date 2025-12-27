@@ -1,11 +1,12 @@
-import type { AuthService } from "@/auth/auth.service";
 import { Core } from "@/lib/core.namespace";
 import { Encrypt } from "@/lib/encrypt.namespace";
 import { TXT } from "@/lib/txt.namespace";
-import type { LoggerService } from "@/logger/logger.service";
+import { Logger } from "@/logger/logger.service";
 import type { RateLimitEntry } from "@/rate-limit/rate-limit.schema";
 
-export class RateLimitService extends Core.Service {
+export class RateLimitClient {
+	private readonly logger = new Logger();
+
 	readonly rateLimitHeader = "x-rl";
 	readonly rateLimitCookie = "__rlid";
 	readonly rlWindow = 60_000; // 1 minute
@@ -15,12 +16,7 @@ export class RateLimitService extends Core.Service {
 	private storedSalt: string;
 	private saltRotatesAt: number;
 
-	constructor(
-		private readonly logger: LoggerService,
-		private readonly authService: AuthService,
-		private readonly cookiesEnabled?: boolean,
-	) {
-		super();
+	constructor(private readonly cookiesEnabled?: boolean) {
 		this.storedSalt = Encrypt.getRandomBytes();
 		this.saltRotatesAt = Date.now() + this.rlSaltRotate;
 	}
@@ -33,13 +29,13 @@ export class RateLimitService extends Core.Service {
 		return 30;
 	}
 
-	middleware = this.makeMiddlewareHandler(async (c) => {
+	async handler(req: Core.Request, headers: Core.Headers, cookies: Core.Cookies) {
 		// about every 1000 requests
 		if (Math.random() < 0.001) {
 			this.cleanupStore();
 		}
 
-		const id = this.getId(c.req, c.headers, c.cookies);
+		const id = this.getId(req, headers, cookies);
 
 		const now = Date.now();
 
@@ -57,16 +53,17 @@ export class RateLimitService extends Core.Service {
 
 		const resetUnix = Math.ceil(entry.resetAt / 1000);
 		const value = `limit=${max}, remaining=${remaining}, reset=${resetUnix}`;
-		c.headers.set(this.rateLimitHeader, value);
+		headers.set(this.rateLimitHeader, value);
 
 		if (!allowed) {
 			this.logger.error("RATE_LIMIT_HIT", { id, timestamp: Date.now() });
 			throw new Core.Error("Too many requests", Core.Status.TOO_MANY_REQUESTS);
 		}
-	});
+	}
 
 	private getId(req: Core.Request, headers: Core.Headers, cookies: Core.Cookies) {
-		const authValue = this.authService.getAccessToken(headers);
+		const authHeader = headers.get("authorization");
+		const authValue = authHeader?.split(" ")[1];
 		if (TXT.isDefined(authValue)) {
 			// JWT
 			return `u:${this.hash(authValue)}`;

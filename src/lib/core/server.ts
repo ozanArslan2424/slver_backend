@@ -1,22 +1,20 @@
-import type { __Core_DBClientInterface } from "@/lib/core/db-client";
 import { Adapter } from "../adapter.namespace";
 import type { __Core_Cors } from "./cors";
 import { __Core_Request } from "./request";
 import type { __Core_Router } from "./router";
 import type { __Core_Logger } from "@/lib/core/logger";
 import type { __Adapter_ServeOptions } from "@/lib/adapter/serve-options";
+import type { __Core_DBClientInterface } from "@/lib/core/db-client";
 
 export type __Core_ServerOptions = {
 	db?: __Core_DBClientInterface;
 	router: __Core_Router;
-	logger: __Core_Logger;
 	cors?: __Core_Cors;
 };
 
 export class __Core_Server {
 	db?: __Core_DBClientInterface;
 	router: __Core_Router;
-	logger: __Core_Logger;
 	cors?: __Core_Cors;
 
 	port?: __Adapter_ServeOptions["port"];
@@ -25,7 +23,6 @@ export class __Core_Server {
 	constructor(readonly options: __Core_ServerOptions) {
 		this.db = options.db;
 		this.router = options.router;
-		this.logger = options.logger ?? console;
 		this.cors = options.cors;
 	}
 
@@ -37,7 +34,7 @@ export class __Core_Server {
 		this.port = port;
 
 		const exit = async () => {
-			this.logger.log("Shutting down gracefully...");
+			console.log("Shutting down gracefully...");
 			await this.db?.disconnect();
 			process.exit(0);
 		};
@@ -63,7 +60,7 @@ export class __Core_Server {
 				staticPages: this.router.staticPages,
 			});
 		} catch (err) {
-			this.logger.error(err);
+			console.error(err);
 			exit();
 		}
 	}

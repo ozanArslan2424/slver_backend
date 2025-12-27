@@ -1,12 +1,14 @@
 import { Config } from "@/lib/config.namespace";
 import type { Core } from "@/lib/core.namespace";
 import { Help } from "@/lib/help.namespace";
-import type { LoggerService } from "@/logger/logger.service";
+import { Logger } from "@/logger/logger.service";
 import { PrismaNeon } from "@prisma/adapter-neon";
 import { PrismaClient } from "prisma/generated/client";
 
-export class DBService extends PrismaClient implements Core.DBClientInterface {
-	constructor(private readonly loggerService: LoggerService) {
+export class DatabaseClient extends PrismaClient implements Core.DBClientInterface {
+	private readonly logger = new Logger();
+
+	constructor() {
 		const connectionString = Config.get("DATABASE_URL");
 		const adapter = new PrismaNeon({ connectionString });
 		super({ adapter });
@@ -19,11 +21,11 @@ export class DBService extends PrismaClient implements Core.DBClientInterface {
 		for (let attempt = 1; attempt <= maxAttempts; attempt++) {
 			try {
 				await this.$connect();
-				this.loggerService.log("✅ DB Client Connected");
+				this.logger.log("✅ DB Client Connected");
 				return;
 			} catch (err) {
 				const error = err as Error;
-				this.loggerService.warn(
+				this.logger.warn(
 					`❌ DB Connection attempt ${attempt}/${maxAttempts} failed: ${error.message}`,
 				);
 
@@ -34,7 +36,7 @@ export class DBService extends PrismaClient implements Core.DBClientInterface {
 				}
 
 				const delay = baseDelay * Math.pow(2, attempt - 1);
-				this.loggerService.log(`Retrying in ${delay}ms...`);
+				this.logger.log(`Retrying in ${delay}ms...`);
 				await new Promise((resolve) => setTimeout(resolve, delay));
 			}
 		}
@@ -42,6 +44,6 @@ export class DBService extends PrismaClient implements Core.DBClientInterface {
 
 	async disconnect(): Promise<void> {
 		await this.$disconnect();
-		this.loggerService.log("❌ DB Client Disconnected");
+		this.logger.log("❌ DB Client Disconnected");
 	}
 }

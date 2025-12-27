@@ -1,16 +1,13 @@
-import type { LanguageService } from "@/language/language.service";
+import type { LanguageClient } from "@/language/language.client";
 import type { Adapter } from "@/lib/adapter.namespace";
 import { Core } from "@/lib/core.namespace";
-import type { LoggerService } from "@/logger/logger.service";
+import { Logger } from "@/logger/logger.service";
 import { Prisma } from "prisma/generated/client";
 
-export class ErrorService extends Core.Service {
-	constructor(
-		private readonly logger: LoggerService,
-		private readonly languageService: LanguageService,
-	) {
-		super();
-	}
+export class ErrorClient {
+	private readonly logger = new Logger();
+
+	constructor(private readonly languageClient: LanguageClient) {}
 
 	private readonly prismaStatus: Record<string, Core.Status> = {
 		P2000: Core.Status.BAD_REQUEST,
@@ -34,8 +31,6 @@ export class ErrorService extends Core.Service {
 	}
 
 	async handler(err: Adapter.Error) {
-		this.logger.onError(err);
-
 		let status: Core.Status = Core.Status.INTERNAL_SERVER_ERROR;
 		let key = err.message;
 
@@ -65,8 +60,12 @@ export class ErrorService extends Core.Service {
 				break;
 		}
 
-		const t = await this.languageService.makeTranslator("error");
+		const t = await this.languageClient.makeTranslator("error");
+		const message = t(key);
+		if (status >= 500) {
+			this.logger.error(`[${err.name}] ${message}`, err);
+		}
 
-		return new Core.Response({ message: t(key) }, { status });
+		return new Core.Response({ message }, { status });
 	}
 }

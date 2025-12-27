@@ -226,7 +226,6 @@ export namespace Core {
 	/**
 	 * Server is the entrypoint to the app. It needs a port and a {@link Router} to start listening.
 	 * You can pass a {@link Adapter.DBClientInterface} instance to connect and disconnect.
-	 * You can pass a logger that must extend {@link Adapter.Logger}.
 	 * You can pass your {@link Cors} object.
 	 * */
 	export const Server = __Core_Server;

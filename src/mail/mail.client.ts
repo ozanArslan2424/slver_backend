@@ -1,19 +1,15 @@
-import type { LoggerService } from "@/logger/logger.service";
+import { Logger } from "@/logger/logger.service";
 import nodemailer from "nodemailer";
-import type { LanguageService } from "@/language/language.service";
-import { Core } from "@/lib/core.namespace";
+import type { LanguageClient } from "@/language/language.client";
 import { Config } from "@/lib/config.namespace";
 import type { Translator } from "@/language/language.schema";
+import path from "path";
 
-export class MailService extends Core.Service {
+export class MailClient {
+	private readonly logger = new Logger();
 	private transporter: nodemailer.Transporter;
 
-	constructor(
-		private readonly logger: LoggerService,
-		private readonly languageService: LanguageService,
-		private readonly templates: Record<string, any>,
-	) {
-		super();
+	constructor(private readonly languageClient: LanguageClient) {
 		this.transporter = this.createTransporter();
 	}
 
@@ -48,8 +44,9 @@ export class MailService extends Core.Service {
 		}
 	}
 
-	async loadTemplate(fileName: string, variables: Record<string, string> = {}) {
-		let template = this.templates[fileName];
+	async loadTemplate(filename: string, variables: Record<string, string> = {}) {
+		const pathname = path.join(process.cwd(), "src", "mail", "templates", filename);
+		let template = await Bun.file(pathname).text();
 		Object.keys(variables).forEach((key) => {
 			template = template.replace(new RegExp(`{{${key}}}`, "g"), variables[key]!);
 		});
@@ -73,7 +70,7 @@ export class MailService extends Core.Service {
 		subject: (t: Translator) => string;
 		variables: (t: Translator) => Record<string, string>;
 	}) {
-		const t = await this.languageService.makeTranslator(translator);
+		const t = await this.languageClient.makeTranslator(translator);
 		const html = htmlTemplateName ? await this.loadTemplate(htmlTemplateName, variables(t)) : "";
 		const text = await this.loadTemplate(textTemplateName, variables(t));
 
