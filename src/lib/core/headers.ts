@@ -1,4 +1,3 @@
-import { Adapter } from "../adapter.namespace";
 import { Obj } from "../obj.namespace";
 import type { __Core_CommonHeaders } from "./common-headers";
 
@@ -7,9 +6,9 @@ export type __Core_HeaderKey = __Core_CommonHeaders | (string & {});
 export type __Core_HeadersInit =
 	| (Record<string, string> & { [K in __Core_HeaderKey]?: string })
 	| [string, string][]
-	| Adapter.Headers;
+	| Headers;
 
-export class __Core_Headers extends Adapter.Headers {
+export class __Core_Headers extends Headers {
 	constructor(init?: __Core_HeadersInit) {
 		super(init);
 	}

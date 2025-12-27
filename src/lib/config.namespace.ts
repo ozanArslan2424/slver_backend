@@ -1,4 +1,3 @@
-import { Adapter } from "@/lib/adapter.namespace";
 import "dotenv/config";
 import pkgJson from "package.json";
 
@@ -16,12 +15,16 @@ export namespace Config {
 		} else if (opts?.fallback !== undefined) {
 			return opts?.fallback;
 		} else {
-			throw new Adapter.Error(`${key} doesn't exist in env`);
+			throw new Error(`${key} doesn't exist in env`);
 		}
 	}
 
 	export function isDev() {
 		// Normally undefined, should be set manually in production
 		return process.env.NODE_ENV !== "production";
+	}
+
+	export function set(key: string, value: string) {
+		process.env[key] = value;
 	}
 }

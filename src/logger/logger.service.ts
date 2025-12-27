@@ -3,7 +3,7 @@ import { Core } from "@/lib/core.namespace";
 import { LogLevel } from "@/logger/logger.schema";
 import winston from "winston";
 
-export class Logger extends Core.Service implements Core.Logger {
+export class Logger implements Core.Logger {
 	private readonly isDevelopment = Config.isDev();
 	private readonly logLevel = Config.get("LOG_LEVEL", {
 		fallback: LogLevel.info,
@@ -11,7 +11,6 @@ export class Logger extends Core.Service implements Core.Logger {
 	private logger: winston.Logger;
 
 	constructor(private readonly loggerEnabled?: boolean) {
-		super();
 		this.logger = this.createLogger();
 	}
 

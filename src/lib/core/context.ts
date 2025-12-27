@@ -1,10 +1,10 @@
-import { Adapter } from "../adapter.namespace";
-import { Obj } from "../obj.namespace";
-import { __Core_Cookies } from "./cookies";
-import { __Core_Headers } from "./headers";
-import { __Core_Request } from "./request";
-import type { __Core_RouteSchemas } from "./route";
-import { __Core_Status } from "./status";
+import { __Core_Cookies } from "@/lib/core/cookies";
+import { __Core_Headers } from "@/lib/core/headers";
+import { type __Core_SchemaType, __Core_parse } from "@/lib/core/parse";
+import { __Core_Request } from "@/lib/core/request";
+import { type __Core_RouteSchemas } from "@/lib/core/route";
+import { __Core_Status } from "@/lib/core/status";
+import { Obj } from "@/lib/obj.namespace";
 
 export class __Core_Context<
 	D = void,
@@ -24,7 +24,7 @@ export class __Core_Context<
 	params: P;
 
 	constructor(
-		private readonly request: Adapter.Request,
+		private readonly request: Request,
 		public readonly path: string,
 		private readonly schemas?: __Core_RouteSchemas<R, B, S, P>,
 		public data?: D,
@@ -42,7 +42,7 @@ export class __Core_Context<
 
 	private async parseBody<B extends unknown = unknown>(
 		req: __Core_Request,
-		schema?: Adapter.ZodType<B>,
+		schema?: __Core_SchemaType<B>,
 	): Promise<B> {
 		const empty = {} as B;
 
@@ -52,7 +52,7 @@ export class __Core_Context<
 		try {
 			let body = await req.json();
 			if (schema) {
-				body = Adapter.zodParse(body, schema, "unprocessable.body");
+				body = __Core_parse(body, schema, "unprocessable.body");
 			}
 			return body;
 		} catch (err) {
@@ -61,10 +61,10 @@ export class __Core_Context<
 		}
 	}
 
-	private parseSearch<S extends unknown = unknown>(url: URL, schema?: Adapter.ZodType<S>): S {
+	private parseSearch<S extends unknown = unknown>(url: URL, schema?: __Core_SchemaType<S>): S {
 		let search = Obj.from(url.searchParams) as S;
 		if (schema) {
-			search = Adapter.zodParse(search, schema, "unprocessable.searchParams");
+			search = __Core_parse(search, schema, "unprocessable.searchParams");
 		}
 		return search;
 	}
@@ -72,7 +72,7 @@ export class __Core_Context<
 	private parseParams<P extends unknown = unknown>(
 		path: string,
 		url: URL,
-		schema?: Adapter.ZodType<P>,
+		schema?: __Core_SchemaType<P>,
 	): P {
 		const reqPath = url.pathname;
 
@@ -91,7 +91,7 @@ export class __Core_Context<
 		let params = Obj.from(paramsObj) as P;
 
 		if (schema) {
-			params = Adapter.zodParse(params, schema, "unprocessable.params");
+			params = __Core_parse(params, schema, "unprocessable.params");
 		}
 
 		return params;

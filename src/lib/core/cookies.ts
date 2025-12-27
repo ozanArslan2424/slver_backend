@@ -1,6 +1,8 @@
-import { Adapter } from "@/lib/adapter.namespace";
 import { TXT } from "@/lib/txt.namespace";
+import { CookieMap } from "bun";
 
+export var __Core_OnlyBun_Cookies = CookieMap;
+export type __Core_OnlyBun_Cookies = CookieMap;
 export type __Core_CookieOptions = {
 	name: string;
 	value: string;
@@ -16,15 +18,9 @@ export type __Core_CookieOptions = {
 	maxAge?: number;
 };
 
-export class __Core_Cookies extends Adapter.Cookies {
+export class __Core_Cookies extends __Core_OnlyBun_Cookies {
 	constructor() {
 		super();
-	}
-
-	getOptions(key: string): __Core_CookieOptions | null {
-		const cookie = this.get(key);
-		console.log(cookie);
-		return null;
 	}
 
 	decodeValue(cookieString: string): string | null {

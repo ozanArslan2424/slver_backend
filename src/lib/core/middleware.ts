@@ -1,6 +1,6 @@
 import { Obj } from "../obj.namespace";
 import type { __Core_Controller } from "./controller";
-import { __Core_Context } from "./route-context";
+import { __Core_Context } from "./context";
 
 export type __Core_MiddlewareCallback<D = void> = (context: __Core_Context) => Promise<D> | D;
 export type __Core_MiddlewareProvider<D = void> = {

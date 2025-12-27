@@ -1,5 +1,3 @@
-import { Adapter } from "@/lib/adapter.namespace";
-
 export namespace Help {
 	export type KeyOf<T> = T extends any ? keyof T : never;
 
@@ -88,7 +86,7 @@ export namespace Help {
 			} else {
 				message = `${conditionName}: ${message}`;
 			}
-			throw new Adapter.Error(message);
+			throw new Error(message);
 		}
 	}
 }

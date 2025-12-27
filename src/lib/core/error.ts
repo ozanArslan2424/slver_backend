@@ -1,7 +1,6 @@
-import { Adapter } from "../adapter.namespace";
 import type { __Core_Status } from "./status";
 
-export class __Core_Error extends Adapter.Error {
+export class __Core_Error extends Error {
 	constructor(
 		public override message: string,
 		public status: __Core_Status,

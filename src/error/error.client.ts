@@ -1,5 +1,4 @@
 import type { LanguageClient } from "@/language/language.client";
-import type { Adapter } from "@/lib/adapter.namespace";
 import { Core } from "@/lib/core.namespace";
 import { Logger } from "@/logger/logger.service";
 import { Prisma } from "prisma/generated/client";
@@ -30,7 +29,7 @@ export class ErrorClient {
 		return `prisma.${code}`;
 	}
 
-	async handler(err: Adapter.Error) {
+	async handler(err: Error) {
 		let status: Core.Status = Core.Status.INTERNAL_SERVER_ERROR;
 		let key = err.message;
 

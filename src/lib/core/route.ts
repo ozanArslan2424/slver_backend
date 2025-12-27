@@ -1,8 +1,8 @@
-import type { Adapter } from "../adapter.namespace";
 import { TXT } from "../txt.namespace";
 import type { __Core_Method } from "./method";
 import { __Core_Response } from "./response";
-import { __Core_Context } from "./route-context";
+import { __Core_Context } from "./context";
+import type { __Core_SchemaType } from "@/lib/core/parse";
 
 export type __Core_Endpoint = `/${string}`;
 
@@ -24,10 +24,10 @@ export type __Core_RouteSchemas<
 	S extends unknown = unknown,
 	P extends unknown = unknown,
 > = {
-	response?: Adapter.ZodType<R>;
-	body?: Adapter.ZodType<B>;
-	search?: Adapter.ZodType<S>;
-	params?: Adapter.ZodType<P>;
+	response?: __Core_SchemaType<R>;
+	body?: __Core_SchemaType<B>;
+	search?: __Core_SchemaType<S>;
+	params?: __Core_SchemaType<P>;
 };
 
 /**
@@ -40,7 +40,7 @@ export type __Core_RouteHandler<
 	B extends unknown = unknown,
 	S extends unknown = unknown,
 	P extends unknown = unknown,
-> = (req: Adapter.Request, context?: __Core_Context<D, R, B, S, P>) => Promise<__Core_Response>;
+> = (req: Request, context?: __Core_Context<D, R, B, S, P>) => Promise<__Core_Response>;
 
 export class __Core_Route<
 	D = undefined,
