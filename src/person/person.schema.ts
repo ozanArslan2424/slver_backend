@@ -1,5 +1,6 @@
-import { MembershipSchema, GroupSchema } from "@/group/group.schema";
+import { GroupEntitySchema } from "@/group/group.schema";
 import type { Core } from "@/lib/core.namespace";
+import { MembershipEntitySchema } from "@/membership/membership.schema";
 import { type } from "arktype";
 import { PersonRole } from "prisma/generated/enums";
 
@@ -15,7 +16,7 @@ export const PersonSchema = type({
 });
 
 export const PersonDataSchema = PersonSchema.and({
-	memberships: MembershipSchema.omit("password").and({ group: GroupSchema }).array(),
+	memberships: MembershipEntitySchema.omit("password").and({ group: GroupEntitySchema }).array(),
 });
 
 export type PersonData = Core.InferSchema<typeof PersonDataSchema>;

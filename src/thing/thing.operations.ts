@@ -1,5 +1,5 @@
 import type { TransactionClient } from "@/db/database.schema";
-import type { ThingData } from "@/thing/thing.schema";
+import type { Thing } from "prisma/generated/client";
 
 export interface ThingOperations {
 	include: { assignedTo: true };
@@ -10,7 +10,7 @@ export interface ThingOperations {
 		createdById: number,
 		assignedToId: number | undefined,
 		tx?: TransactionClient,
-	): Promise<ThingData>;
+	): Promise<Thing>;
 	update(
 		id: number,
 		content: string | null,
@@ -19,11 +19,12 @@ export interface ThingOperations {
 		assignedToId: number | undefined | null,
 		isDone: boolean | null,
 		tx?: TransactionClient,
-	): Promise<ThingData>;
+	): Promise<Thing>;
 	findMany(
 		createdById: number,
 		groupId: number | null,
+		isDone: boolean | null,
 		tx?: TransactionClient,
-	): Promise<ThingData[]>;
+	): Promise<Thing[]>;
 	delete(id: number, tx?: TransactionClient): Promise<void>;
 }

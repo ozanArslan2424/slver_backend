@@ -27,9 +27,9 @@ export class AuthService extends Core.Service {
 		super();
 	}
 
-	async getProfile(headers: Core.Headers) {
+	async getProfile(headers: Core.Headers, tx?: TransactionClient) {
 		const payload = this.getAccessPayload(headers);
-		const user = await this.userRepository.findByIdWithProfile(payload.userId);
+		const user = await this.userRepository.findByIdWithProfile(payload.userId, tx);
 
 		if (!user || !user.profile) {
 			console.log("!user");

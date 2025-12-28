@@ -65,13 +65,22 @@ export class ThingRepository implements ThingOperations {
 		});
 	}
 
-	async findMany(createdById: number, groupId: number | null, tx?: TransactionClient) {
-		let where: Prisma.ThingFindManyArgs["where"] = {};
+	async findMany(
+		createdById: number,
+		groupId: number | null,
+		isDone: boolean | null,
+		tx?: TransactionClient,
+	) {
+		let where: Prisma.ThingFindManyArgs["where"] = {
+			groupId,
+		};
 
-		if (groupId) {
-			where = { OR: [{ createdById }, { groupId }] };
-		} else {
-			where = { createdById };
+		if (groupId === null) {
+			where.createdById = createdById;
+		}
+
+		if (isDone !== null) {
+			where.isDone = isDone;
 		}
 
 		const client = tx ?? this.db;

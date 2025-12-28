@@ -48,6 +48,7 @@ async function main() {
 		mailClient,
 	);
 	const groupService = new GroupService(
+		db,
 		personRepository,
 		membershipRepository,
 		groupRepository,
@@ -57,8 +58,8 @@ async function main() {
 	const thingService = new ThingService(
 		db,
 		authService,
-		groupService,
 		thingRepository,
+		membershipRepository,
 		seenStatusRepository,
 	);
 
@@ -92,7 +93,6 @@ async function main() {
 			allowedHeaders: [
 				"Content-Type",
 				"Authorization",
-				groupService.groupIdHeader,
 				languageClient.langHeader,
 				rateLimitClient.rateLimitHeader,
 			],

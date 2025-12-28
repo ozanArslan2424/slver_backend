@@ -12,15 +12,18 @@
 	"group": {
 		"idNotFound": "Grup kimliği bulunamadı",
 		"notFound": "Grup bulunamadı",
-		"invalidPassword": "Geçersiz grup şifresi",
 		"notMember": "Bu grubun üyesi değilsiniz",
 		"notAdmin": "Yalnızca grup yöneticileri bu işlemi gerçekleştirebilir.",
-		"inviteAccepted": "Bu kişi zaten grupta",
-		"inviteRejected": "Bu kişi gruptan çıkarılmış",
-		"invitePending": "Davet zaten gönderilmiş"
+		"invite.accepted": "Bu kişi zaten grupta",
+		"invite.rejected": "Bu kişi gruptan çıkarılmış",
+		"invite.pending": "Davet zaten gönderilmiş"
 	},
 	"person": {
 		"notFound": "Kişi bulunamadı"
+	},
+	"membership": {
+		"notFound": "Davet bulunamadı",
+		"invalidPassword": "Geçersiz şifresi"
 	},
 	"prisma": {
 		"unknown": "Bilinmeyen veri tabanı hatası",

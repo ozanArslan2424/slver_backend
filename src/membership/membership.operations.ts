@@ -6,13 +6,13 @@ export interface MembershipOperations {
 	findUnique(
 		personId: number,
 		groupId: number,
-		status: Status | undefined,
+		status: Status | null,
+		role: PersonRole | null,
 		tx?: TransactionClient,
 	): Promise<Membership | null>;
-	// TODO: Multiple groups can be joined, adjust as such
 	getPendingMembership(
 		personId: number,
-		password: string,
+		groupId: number,
 		tx?: TransactionClient,
 	): Promise<Membership | null>;
 	update(
@@ -22,10 +22,10 @@ export interface MembershipOperations {
 		tx?: TransactionClient,
 	): Promise<Membership | null>;
 	create(
-		password: string,
-		role: PersonRole,
-		groupId: number,
 		personId: number,
+		groupId: number,
+		role: PersonRole,
+		password: string,
 		tx?: TransactionClient,
 	): Promise<Membership>;
 }

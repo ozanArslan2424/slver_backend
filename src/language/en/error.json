@@ -12,15 +12,18 @@
 	"group": {
 		"idNotFound": "Group ID could not be found",
 		"notFound": "Group not found",
-		"invalidPassword": "Invalid group password",
 		"notMember": "You are not a member of this group",
 		"notAdmin": "Only admins/owners can perform this action",
-		"inviteAccepted": "This person is already a member.",
-		"inviteRejected": "This person was removed from this group.",
-		"invitePending": "The invitation is already sent."
+		"invite.accepted": "This person is already a member.",
+		"invite.rejected": "This person was removed from this group.",
+		"invite.pending": "The invitation is already sent."
 	},
 	"person": {
 		"notFound": "Person not found"
+	},
+	"membership": {
+		"notFound": "Membership invite not found",
+		"invalidPassword": "Invalid password"
 	},
 	"prisma": {
 		"unknown": "Unknown database error occurred",

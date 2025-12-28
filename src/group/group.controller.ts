@@ -1,32 +1,32 @@
 import { Core } from "@/lib/core.namespace";
-import {
-	GroupCreateSchema,
-	GroupJoinSchema,
-	GroupInviteSchema,
-	GroupRemoveSchema,
-} from "@/group/group.schema";
 import type { GroupService } from "@/group/group.service";
-import { PersonDataSchema } from "@/person/person.schema";
+import {
+	GroupGetParamsSchema,
+	GroupEntitySchema,
+	GroupCreateBodySchema,
+	GroupInviteBodySchema,
+	GroupJoinBodySchema,
+} from "@/group/group.schema";
 
 export class GroupController extends Core.Controller {
 	constructor(private readonly groupService: GroupService) {
 		super("/group");
 	}
 
-	get = this.route({ method: "GET", path: "/" }, async () => {
-		return await this.groupService.get();
-	});
-
-	list = this.route({ method: "GET", path: "/list" }, async (c) => {
-		return await this.groupService.list(c.headers);
-	});
-
-	personList = this.route(
-		{ method: "GET", path: "/person-list" },
+	get = this.route(
+		{ method: "GET", path: "/:id" },
 		async (c) => {
-			return await this.groupService.listPerson(c.headers);
+			return await this.groupService.get(c.headers, c.params.id);
 		},
-		{ response: PersonDataSchema.array() },
+		{ params: GroupGetParamsSchema, response: GroupEntitySchema },
+	);
+
+	list = this.route(
+		{ method: "GET", path: "/" },
+		async (c) => {
+			return await this.groupService.list(c.headers);
+		},
+		{ response: GroupEntitySchema.array() },
 	);
 
 	create = this.route(
@@ -35,33 +35,33 @@ export class GroupController extends Core.Controller {
 			const body = await c.body();
 			return await this.groupService.create(c.headers, body);
 		},
-		{ body: GroupCreateSchema },
+		{ body: GroupCreateBodySchema, response: GroupEntitySchema },
 	);
 
-	join = this.route(
-		{ method: "POST", path: "/join" },
+	update = this.route(
+		{ method: "POST", path: "/:id/update" },
 		async (c) => {
 			const body = await c.body();
-			return await this.groupService.join(c.headers, body);
+			return await this.groupService.update(c.headers, c.params.id, body);
 		},
-		{ body: GroupJoinSchema },
+		{ params: GroupGetParamsSchema, body: GroupCreateBodySchema, response: GroupEntitySchema },
 	);
 
 	invite = this.route(
-		{ method: "POST", path: "/invite" },
+		{ method: "POST", path: "/:id/invite" },
 		async (c) => {
 			const body = await c.body();
-			return await this.groupService.invite(c.headers, body);
+			await this.groupService.invite(c.headers, c.params.id, body);
 		},
-		{ body: GroupInviteSchema },
+		{ params: GroupGetParamsSchema, body: GroupInviteBodySchema },
 	);
 
-	remove = this.route(
-		{ method: "POST", path: "/remove" },
+	join = this.route(
+		{ method: "POST", path: "/:id/join" },
 		async (c) => {
 			const body = await c.body();
-			return await this.groupService.remove(c.headers, body);
+			await this.groupService.join(c.headers, c.params.id, body);
 		},
-		{ body: GroupRemoveSchema },
+		{ params: GroupGetParamsSchema, body: GroupJoinBodySchema },
 	);
 }
