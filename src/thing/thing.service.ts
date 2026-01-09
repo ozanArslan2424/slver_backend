@@ -1,40 +1,44 @@
-import type { GroupService } from "@/group/group.service";
 import type {
-	ThingCreateData,
-	ThingUpdateData,
-	ThingAssignData,
-	ThingDoneData,
-	ThingRemoveData,
+	ThingAssignBodySchema,
+	ThingCreateBodySchema,
+	ThingDoneBodySchema,
+	ThingUpdateBodySchema,
 } from "@/thing/thing.schema";
 import { Core } from "@/lib/core.namespace";
-import type { DatabaseClient } from "@/db/database.client";
+import type { DatabaseClient } from "@/client/database.client";
 import type { AuthService } from "@/auth/auth.service";
 import { Status } from "prisma/generated/enums";
 import type { SeenStatusRepository } from "@/seen-status/seen-status.repository";
 import type { ThingRepository } from "@/thing/thing.repository";
+import type { MembershipRepository } from "@/membership/membership.repository";
 
 export class ThingService extends Core.Service {
 	constructor(
-		private readonly database: DatabaseClient,
+		private readonly db: DatabaseClient,
 		private readonly authService: AuthService,
-		private readonly groupService: GroupService,
 		private readonly thingRepository: ThingRepository,
+		private readonly membershipRepository: MembershipRepository,
 		private readonly seenStatusRepository: SeenStatusRepository,
 	) {
 		super();
 	}
 
-	async create(headers: Core.Headers, body: ThingCreateData) {
-		const profile = await this.authService.getProfile(headers);
-
-		return await this.database.$transaction(async (tx) => {
-			const membership = await this.groupService.getMembership(profile, tx);
-
-			const isMember = membership && membership.status === Status.accepted;
+	async create(headers: Core.Headers, body: Core.InferSchema<typeof ThingCreateBodySchema>) {
+		return await this.db.$transaction(async (tx) => {
+			const profile = await this.authService.getProfile(headers, tx);
+			const groupId = body.groupId;
 			const createdById = profile.id;
+			const isMember = groupId
+				? await this.membershipRepository.findUnique(
+						createdById,
+						groupId,
+						Status.accepted,
+						null,
+						tx,
+					)
+				: false;
 			const content = body.content;
-			const dueDate = body.dueDate;
-			const groupId = isMember ? membership.groupId : undefined;
+			const dueDate = body.dueDate ? new Date(body.dueDate) : null;
 			const assignedToId = isMember ? undefined : profile.id;
 
 			const thing = await this.thingRepository.create(
@@ -47,54 +51,60 @@ export class ThingService extends Core.Service {
 			);
 
 			await this.seenStatusRepository.createMany(thing.id, [profile.id], tx);
-
 			return thing;
 		});
 	}
 
-	async update(headers: Core.Headers, body: ThingUpdateData) {
+	async update(
+		headers: Core.Headers,
+		thingId: number,
+		body: Core.InferSchema<typeof ThingUpdateBodySchema>,
+	) {
 		await this.authService.getProfile(headers);
-		const id = body.thingId;
 		const content = body.content;
-		const dueDate = body.dueDate;
-		return await this.thingRepository.update(id, content, dueDate, null, null, null);
+		const dueDate = body.dueDate ? new Date(body.dueDate) : null;
+		return await this.thingRepository.update(thingId, content, dueDate, null, null, null);
 	}
 
-	async list(headers: Core.Headers) {
-		const profile = await this.authService.getProfile(headers);
-		const membership = await this.groupService.getMembership(profile);
+	async list(headers: Core.Headers, groupId: number | null) {
+		return await this.db.$transaction(async (tx) => {
+			const profile = await this.authService.getProfile(headers, tx);
 
-		const list = await this.thingRepository.findMany(
-			profile.id,
-			membership?.status === Status.accepted ? membership.groupId : null,
-		);
+			const list = await this.thingRepository.findMany(profile.id, groupId, tx);
 
-		await this.seenStatusRepository.updateMany(
-			profile.id,
-			list.map((t) => t.id),
-			true,
-		);
+			await this.seenStatusRepository.updateMany(
+				profile.id,
+				list.map((t) => t.id),
+				true,
+				tx,
+			);
 
-		return list;
+			return list;
+		});
 	}
 
-	async assign(headers: Core.Headers, body: ThingAssignData) {
+	async assign(
+		headers: Core.Headers,
+		thingId: number,
+		body: Core.InferSchema<typeof ThingAssignBodySchema>,
+	) {
 		await this.authService.getProfile(headers);
-		const id = body.thingId;
-		const assignedToId = body.personId;
-		return await this.thingRepository.update(id, null, null, null, assignedToId, null);
+		const assignedToId = body.assignedToId;
+		return await this.thingRepository.update(thingId, null, null, null, assignedToId, null);
 	}
 
-	async done(headers: Core.Headers, body: ThingDoneData) {
+	async done(
+		headers: Core.Headers,
+		thingId: number,
+		body: Core.InferSchema<typeof ThingDoneBodySchema>,
+	) {
 		await this.authService.getProfile(headers);
-		const id = body.thingId;
 		const isDone = body.isDone;
-		return await this.thingRepository.update(id, null, null, null, null, isDone);
+		return await this.thingRepository.update(thingId, null, null, null, null, isDone);
 	}
 
-	async remove(headers: Core.Headers, body: ThingRemoveData) {
+	async remove(headers: Core.Headers, thingId: number) {
 		await this.authService.getProfile(headers);
-		const id = body.thingId;
-		return await this.thingRepository.delete(id);
+		return await this.thingRepository.delete(thingId);
 	}
 }

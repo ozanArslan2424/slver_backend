@@ -1,28 +1,33 @@
 import { AuthController } from "@/auth/auth.controller";
 import { AuthService } from "@/auth/auth.service";
-import { RefreshTokenRepository } from "@/refresh-token/refresh-token.repository";
-import { UserRepository } from "@/user/user.repository";
-import { VerificationTokenRepository } from "@/verification-token/verification-token.repository";
-import { DatabaseClient } from "@/db/database.client";
-import { ErrorClient } from "@/error/error.client";
+import { DatabaseClient } from "@/client/database.client";
+import { ErrorClient } from "@/client/error.client";
 import { GroupController } from "@/group/group.controller";
 import { GroupRepository } from "@/group/group.repository";
 import { GroupService } from "@/group/group.service";
-import { MembershipRepository } from "@/membership/membership.repository";
-import { LanguageClient } from "@/language/language.client";
+import { LanguageClient } from "@/client/language.client";
 import { Config } from "@/lib/config.namespace";
 import { Core } from "@/lib/core.namespace";
 import { Help } from "@/lib/help.namespace";
-import { MailClient } from "@/mail/mail.client";
+import { MailClient } from "@/client/mail.client";
+import { MembershipController } from "@/membership/membership.controller";
+import { MembershipRepository } from "@/membership/membership.repository";
+import { MembershipService } from "@/membership/membership.service";
 import { PersonRepository } from "@/person/person.repository";
-import { RateLimitClient } from "@/rate-limit/rate-limit.client";
+import { RateLimitClient } from "@/client/rate-limit.client";
+import { RefreshTokenRepository } from "@/auth/refresh-token.repository";
 import { SeenStatusRepository } from "@/seen-status/seen-status.repository";
 import { ThingController } from "@/thing/thing.controller";
 import { ThingRepository } from "@/thing/thing.repository";
 import { ThingService } from "@/thing/thing.service";
+import { UserRepository } from "@/auth/user.repository";
+import { VerificationTokenRepository } from "@/auth/verification-token.repository";
 
 async function main() {
-	const db = new DatabaseClient();
+	Core.setRuntime("bun");
+	Core.setGlobalPrefix("/api");
+
+	const db = new DatabaseClient("pg");
 	const languageClient = new LanguageClient();
 	const mailClient = new MailClient(languageClient);
 	const errorClient = new ErrorClient(languageClient);
@@ -43,9 +48,12 @@ async function main() {
 		refreshTokenRepository,
 		verificationTokenRepository,
 		personRepository,
+		groupRepository,
 		mailClient,
+		languageClient,
 	);
 	const groupService = new GroupService(
+		db,
 		personRepository,
 		membershipRepository,
 		groupRepository,
@@ -55,56 +63,50 @@ async function main() {
 	const thingService = new ThingService(
 		db,
 		authService,
-		groupService,
 		thingRepository,
+		membershipRepository,
 		seenStatusRepository,
 	);
+	const membershipService = new MembershipService(db, authService, membershipRepository);
 
-	const router = new Core.Router({
-		globalPrefix: "/api",
+	const server = new Core.Server({
+		db,
 		controllers: [
 			new AuthController(authService),
 			new ThingController(thingService),
 			new GroupController(groupService),
+			new MembershipController(membershipService),
 		],
 		middlewares: [
 			new Core.Middleware((c) => {
 				console.log(`[${c.req.method}] ${c.url.pathname}`);
 			}),
 			new Core.Middleware((c) => {
-				languageClient.storeLanguage(c.headers);
+				languageClient.setLanguage(c.headers);
 			}),
 			new Core.Middleware((c) => {
 				rateLimitClient.handler(c.req, c.headers, c.cookies);
 			}),
 		],
-
 		floatingRoutes: [new Core.Route("GET", "/health", () => "ok")],
 		onError: (err) => errorClient.handler(err),
+		cors: new Core.Cors({
+			allowedOrigins: [
+				Config.get("CLIENT_URL"),
+				...(Config.isDev() ? ["http://localhost:5173"] : []),
+			],
+			allowedMethods: ["GET", "POST"],
+			allowedHeaders: [
+				"Content-Type",
+				"Authorization",
+				languageClient.languageHeader,
+				rateLimitClient.rateLimitHeader,
+			],
+			credentials: true,
+		}),
 	});
 
-	const cors = new Core.Cors({
-		allowedOrigins: [
-			Config.get("CLIENT_URL"),
-			...(Config.isDev() ? ["http://localhost:5173"] : []),
-		],
-		allowedMethods: ["GET", "POST"],
-		allowedHeaders: [
-			"Content-Type",
-			"Authorization",
-			groupService.groupIdHeader,
-			languageClient.langHeader,
-			rateLimitClient.rateLimitHeader,
-		],
-		credentials: true,
-	});
-
-	const server = new Core.Server({ db, router, cors });
-
-	server.setHostname("0.0.0.0");
-	server.listen(Config.get("PORT", { parser: parseInt, fallback: 3000 }));
-
-	console.log(`📡 Listening on ${server.hostname}:${server.port}`);
+	server.listen(Config.get("PORT", { parser: parseInt, fallback: 3000 }), "0.0.0.0");
 }
 
 Help.perform(main);

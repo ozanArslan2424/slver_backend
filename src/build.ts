@@ -6,6 +6,6 @@ await Bun.build({
 	outdir: "./dist",
 });
 
-await fs.cp("src/mail/templates", "dist/src/mail/templates", {
+await fs.cp("src/client/mail", "dist/src/client/mail", {
 	recursive: true,
 });

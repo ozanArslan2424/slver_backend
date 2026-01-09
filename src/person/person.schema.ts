@@ -1,34 +1,30 @@
-import { MembershipSchema, GroupSchema } from "@/group/group.schema";
+import { GroupEntitySchema } from "@/group/group.schema";
+import type { Core } from "@/lib/core.namespace";
+import { MembershipEntitySchema } from "@/membership/membership.schema";
+import { type } from "arktype";
 import { PersonRole } from "prisma/generated/enums";
-import z from "zod";
 
-export const PersonSchema = z.object({
-	id: z.number().int(),
-	createdAt: z.date(),
-	updatedAt: z.date(),
-	name: z.string(),
-	email: z.string(),
-	image: z.string().nullable(),
-	role: z.enum(PersonRole).default("user"),
-	userId: z.string(),
+export const PersonEntitySchema = type({
+	id: "number",
+	createdAt: "Date",
+	updatedAt: "Date",
+	name: "string",
+	email: "string",
+	image: "string | null",
+	role: type.valueOf(PersonRole),
+	userId: "string",
 });
 
-export const PersonDataSchema = PersonSchema.extend({
-	memberships: z.array(
-		MembershipSchema.omit({
-			password: true,
-		}).extend({
-			group: GroupSchema,
-		}),
-	),
+export const PersonDataSchema = PersonEntitySchema.and({
+	memberships: MembershipEntitySchema.omit("password").and({ group: GroupEntitySchema }).array(),
 });
 
-export type PersonData = z.infer<typeof PersonDataSchema>;
+export type PersonData = Core.InferSchema<typeof PersonDataSchema>;
 
-export const PersonCreateSchema = z.object({
-	userId: z.string(),
-	email: z.email(),
-	name: z.string(),
+export const PersonCreateSchema = type({
+	userId: "string",
+	email: "string.email",
+	name: "string",
 });
 
-export type PersonCreateData = z.infer<typeof PersonCreateSchema>;
+export type PersonCreateData = Core.InferSchema<typeof PersonCreateSchema>;

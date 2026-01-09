@@ -1,8 +1,7 @@
-import type { TransactionClient } from "@/db/database.schema";
-import type { DatabaseClient } from "@/db/database.client";
-import type { SeenStatusOperations } from "@/seen-status/seen-status.operations";
+import type { TransactionClient } from "@/client/database.schema";
+import type { DatabaseClient } from "@/client/database.client";
 
-export class SeenStatusRepository implements SeenStatusOperations {
+export class SeenStatusRepository {
 	constructor(private readonly db: DatabaseClient) {}
 
 	async findManyUnseen(personId: number, tx?: TransactionClient) {
@@ -14,16 +13,14 @@ export class SeenStatusRepository implements SeenStatusOperations {
 
 	async updateMany(personId: number, thingIds: number[], isSeen: boolean, tx?: TransactionClient) {
 		const client = tx ?? this.db;
-		const promises = [];
-		for (const thingId of thingIds) {
-			promises.push(
-				client.seenStatus.update({
-					where: { personId_thingId: { personId, thingId }, isSeen: !isSeen },
-					data: { isSeen },
-				}),
-			);
-		}
-		await Promise.all(promises);
+		await client.seenStatus.updateMany({
+			where: {
+				personId,
+				thingId: { in: thingIds },
+				isSeen: !isSeen,
+			},
+			data: { isSeen },
+		});
 	}
 
 	async createMany(thingId: number, personIds: number[], tx?: TransactionClient) {

@@ -1,10 +1,9 @@
-import { Adapter } from "../adapter.namespace";
 import { Obj } from "../obj.namespace";
 import { __Core_Cookies } from "./cookies";
 import { __Core_Headers } from "./headers";
 import { __Core_Status } from "./status";
 
-export type __Core_ResponseBody<R = unknown> = R | Adapter.ResponseBodyInit | null | undefined;
+export type __Core_ResponseBody<R = unknown> = R | BodyInit | null | undefined;
 
 export type __Core_ResponseInit = {
 	cookies?: __Core_Cookies;
@@ -48,8 +47,8 @@ export class __Core_Response<R = unknown> {
 		this.statusText = this.init?.statusText ?? "OK";
 	}
 
-	get response(): Adapter.Response {
-		return new Adapter.Response(this.body as Adapter.ResponseBodyInit | null, {
+	get response(): Response {
+		return new Response(this.body as BodyInit | null, {
 			status: this.status,
 			statusText: this.statusText,
 			headers: this.headers,

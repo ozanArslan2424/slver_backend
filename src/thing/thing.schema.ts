@@ -1,57 +1,43 @@
-import { PersonSchema } from "@/person/person.schema";
-import z from "zod";
+import { PersonEntitySchema } from "@/person/person.schema";
+import { type } from "arktype";
 
-export const ThingSchema = z.object({
-	id: z.number(),
-	createdAt: z.date(),
-	updatedAt: z.date(),
-	content: z.string(),
-	isDone: z.boolean(),
-	doneDate: z.date().nullable(),
-	dueDate: z.date().nullable(),
-	assignedToId: z.number().nullable(),
-	createdById: z.number(),
-	groupId: z.number().nullable(),
+export const ThingEntitySchema = type({
+	id: "number",
+	createdAt: "Date",
+	updatedAt: "Date",
+	content: "string",
+	isDone: "boolean",
+	doneDate: "Date | null",
+	dueDate: "Date | null",
+	assignedToId: "number | null",
+	createdById: "number",
+	groupId: "number | null",
 });
 
-export const ThingDataSchema = ThingSchema.extend({
-	assignedTo: PersonSchema.nullable(),
+// TODO: There must be a way to infer the out type from .pipe
+// but right now it breaks the entire parsing system
+export const ThingGetParamsSchema = type({
+	id: "string.integer",
 });
 
-export type ThingData = z.infer<typeof ThingDataSchema>;
-
-export const ThingCreateDataSchema = z.object({
-	content: z.string().min(1, "Everything must have some content"),
-	dueDate: z
-		.string()
-		.nullable()
-		.transform((v) => (v ? new Date(v) : null)),
+// TODO: There must be a way to infer the out type from .pipe
+// but right now it breaks the entire parsing system
+export const ThingListSearchSchema = type({
+	groupId: "string.integer",
 });
 
-export type ThingCreateData = z.infer<typeof ThingCreateDataSchema>;
-
-export const ThingUpdateDataSchema = ThingCreateDataSchema.extend({
-	thingId: z.number(),
+export const ThingDataSchema = ThingEntitySchema.and({
+	assignedTo: type.or(PersonEntitySchema, "null"),
 });
 
-export type ThingUpdateData = z.infer<typeof ThingUpdateDataSchema>;
-
-export const ThingAssignDataSchema = z.object({
-	thingId: z.number(),
-	personId: z.number(),
+export const ThingCreateBodySchema = type({
+	content: "string > 1",
+	dueDate: "string | null",
+	groupId: "number | undefined",
 });
 
-export type ThingAssignData = z.infer<typeof ThingAssignDataSchema>;
+export const ThingUpdateBodySchema = ThingCreateBodySchema.omit("groupId");
 
-export const ThingRemoveDataSchema = z.object({
-	thingId: z.number(),
-});
+export const ThingAssignBodySchema = ThingEntitySchema.pick("assignedToId");
 
-export type ThingRemoveData = z.infer<typeof ThingRemoveDataSchema>;
-
-export const ThingDoneDataSchema = z.object({
-	thingId: z.number(),
-	isDone: z.boolean(),
-});
-
-export type ThingDoneData = z.infer<typeof ThingDoneDataSchema>;
+export const ThingDoneBodySchema = ThingEntitySchema.pick("isDone");

@@ -1,11 +1,12 @@
 import { Core } from "@/lib/core.namespace";
 import {
-	ThingAssignDataSchema,
-	ThingCreateDataSchema,
+	ThingAssignBodySchema,
+	ThingCreateBodySchema,
 	ThingDataSchema,
-	ThingDoneDataSchema,
-	ThingRemoveDataSchema,
-	ThingUpdateDataSchema,
+	ThingDoneBodySchema,
+	ThingGetParamsSchema,
+	ThingListSearchSchema,
+	ThingUpdateBodySchema,
 } from "@/thing/thing.schema";
 import type { ThingService } from "@/thing/thing.service";
 
@@ -17,9 +18,10 @@ export class ThingController extends Core.Controller {
 	list = this.route(
 		{ method: "GET", path: "/" },
 		async (c) => {
-			return await this.thingService.list(c.headers);
+			const groupId = c.search.groupId ? parseInt(c.search.groupId) : null;
+			return await this.thingService.list(c.headers, groupId);
 		},
-		{ response: ThingDataSchema.array() },
+		{ search: ThingListSearchSchema, response: ThingDataSchema.array() },
 	);
 
 	create = this.route(
@@ -28,42 +30,45 @@ export class ThingController extends Core.Controller {
 			const body = await c.body();
 			return await this.thingService.create(c.headers, body);
 		},
-		{ body: ThingCreateDataSchema, response: ThingDataSchema },
+		{ body: ThingCreateBodySchema, response: ThingDataSchema },
 	);
 
 	update = this.route(
-		{ method: "POST", path: "/update" },
+		{ method: "POST", path: "/:id/update" },
 		async (c) => {
 			const body = await c.body();
-			return await this.thingService.update(c.headers, body);
+			const id = parseInt(c.params.id);
+			return await this.thingService.update(c.headers, id, body);
 		},
-		{ body: ThingUpdateDataSchema, response: ThingDataSchema },
+		{ params: ThingGetParamsSchema, body: ThingUpdateBodySchema, response: ThingDataSchema },
 	);
 
 	remove = this.route(
-		{ method: "POST", path: "/remove" },
+		{ method: "POST", path: "/:id/remove" },
 		async (c) => {
-			const body = await c.body();
-			return await this.thingService.remove(c.headers, body);
+			const id = parseInt(c.params.id);
+			return await this.thingService.remove(c.headers, id);
 		},
-		{ body: ThingRemoveDataSchema },
+		{ params: ThingGetParamsSchema },
 	);
 
 	assign = this.route(
-		{ method: "POST", path: "/assign" },
+		{ method: "POST", path: "/:id/assign" },
 		async (c) => {
 			const body = await c.body();
-			return await this.thingService.assign(c.headers, body);
+			const id = parseInt(c.params.id);
+			return await this.thingService.assign(c.headers, id, body);
 		},
-		{ body: ThingAssignDataSchema, response: ThingDataSchema },
+		{ params: ThingGetParamsSchema, body: ThingAssignBodySchema, response: ThingDataSchema },
 	);
 
 	done = this.route(
-		{ method: "POST", path: "/done" },
+		{ method: "POST", path: "/:id/done" },
 		async (c) => {
 			const body = await c.body();
-			return await this.thingService.done(c.headers, body);
+			const id = parseInt(c.params.id);
+			return await this.thingService.done(c.headers, id, body);
 		},
-		{ body: ThingDoneDataSchema, response: ThingDataSchema },
+		{ params: ThingGetParamsSchema, body: ThingDoneBodySchema, response: ThingDataSchema },
 	);
 }

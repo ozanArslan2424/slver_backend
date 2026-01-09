@@ -1,9 +1,0 @@
-{
-	"subject": "{{appName}} group invitation",
-	"title": "You've been invited to a group!",
-	"description": "You have been invited to join {{groupName}} by {{invitedByName}}.",
-	"otpTitle": "Use this one time password to join:",
-	"otpExpire": "This code will expire in 24 hours",
-	"notMe": "If you weren't expecting this invitation, you can safely ignore it.",
-	"rights": "All rights reserved."
-}

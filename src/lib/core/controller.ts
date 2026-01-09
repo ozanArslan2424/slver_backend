@@ -1,3 +1,4 @@
+import { __Core_globalPrefix } from "@/lib/core/global-prefix";
 import { TXT } from "../txt.namespace";
 import { __Core_Method } from "./method";
 import {
@@ -23,24 +24,16 @@ export class __Core_Controller {
 		callback: __Core_RouteCallback<D, R, B, S, P>,
 		schemas?: __Core_RouteSchemas<R, B, S, P>,
 	): __Core_Route<D, R, B, S, P> {
-		if (typeof definition === "string") {
-			definition = {
-				method: __Core_Method.GET,
-				path: TXT.path(this.prefix, definition),
-			};
-		} else {
-			definition = {
-				method: definition.method,
-				path: TXT.path(this.prefix, definition.path),
-			};
-		}
+		const method = typeof definition === "string" ? __Core_Method.GET : definition.method;
 
-		const route = new __Core_Route<D, R, B, S, P>(
-			definition.method,
-			definition.path,
-			callback,
-			schemas,
-		);
+		const rawPath = typeof definition === "string" ? definition : definition.path;
+		const path = TXT.isDefined(__Core_globalPrefix)
+			? TXT.path(__Core_globalPrefix, this.prefix, rawPath)
+			: TXT.path(this.prefix, rawPath);
+
+		definition = { method, path };
+
+		const route = new __Core_Route<D, R, B, S, P>(method, path, callback, schemas);
 		this.routes.push(route);
 		return route;
 	}

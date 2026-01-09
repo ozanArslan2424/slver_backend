@@ -56,7 +56,7 @@ export class AuthController extends Core.Controller {
 			const body = await c.body();
 			return await this.authService.refresh(body);
 		},
-		{ response: AuthResponseSchema.omit({ profile: true }), body: RefreshSchema },
+		{ response: AuthResponseSchema.omit("profile"), body: RefreshSchema },
 	);
 
 	verify = this.route(

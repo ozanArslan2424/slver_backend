@@ -1,17 +1,16 @@
-import { Adapter } from "../adapter.namespace";
 import { Obj } from "../obj.namespace";
 import { TXT } from "../txt.namespace";
 import { __Core_Cookies } from "./cookies";
 import { __Core_Headers, type __Core_HeadersInit } from "./headers";
 import { __Core_Method } from "./method";
 
-export type __Core_RequestInfo = Adapter.RequestInfo;
-export type __Core_RequestInit = Omit<Adapter.RequestInit, "headers" | "method"> & {
+export type __Core_RequestInfo = RequestInfo;
+export type __Core_RequestInit = Omit<RequestInit, "headers" | "method"> & {
 	headers?: __Core_HeadersInit;
 	method: __Core_Method;
 };
 
-export class __Core_Request extends Adapter.Request {
+export class __Core_Request extends Request {
 	readonly cookies = new __Core_Cookies();
 
 	constructor(
@@ -24,8 +23,14 @@ export class __Core_Request extends Adapter.Request {
 		this.parseCookies();
 	}
 
-	get isAllowedMethod() {
-		return Obj.values(__Core_Method).includes(this.method.toUpperCase() as __Core_Method);
+	get isMethodNotAllowed() {
+		return !Obj.values(__Core_Method).includes(this.method.toUpperCase() as __Core_Method);
+	}
+
+	get isPreflight() {
+		return (
+			this.method === __Core_Method.OPTIONS && this.headers.get("access-control-request-method")
+		);
 	}
 
 	/**
