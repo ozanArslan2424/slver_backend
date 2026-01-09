@@ -4,7 +4,7 @@ import { MembershipEntitySchema } from "@/membership/membership.schema";
 import { type } from "arktype";
 import { PersonRole } from "prisma/generated/enums";
 
-export const PersonSchema = type({
+export const PersonEntitySchema = type({
 	id: "number",
 	createdAt: "Date",
 	updatedAt: "Date",
@@ -15,7 +15,7 @@ export const PersonSchema = type({
 	userId: "string",
 });
 
-export const PersonDataSchema = PersonSchema.and({
+export const PersonDataSchema = PersonEntitySchema.and({
 	memberships: MembershipEntitySchema.omit("password").and({ group: GroupEntitySchema }).array(),
 });
 

@@ -19,7 +19,6 @@ export type __Core_FetchCallback = (req: __Core_Request) => Promise<__Core_Respo
 
 export type __Core_ServerOptions = {
 	db?: __Core_DBClientInterface;
-	globalPrefix?: string;
 	controllers: __Core_Controller[];
 	middlewares?: __Core_Middleware<any>[];
 	floatingRoutes?: __Core_Route<any, any, any, any, any>[];
@@ -35,7 +34,6 @@ export class __Core_Server {
 	readonly routes = new Map<string, __Core_Route>();
 
 	db?: __Core_DBClientInterface;
-	globalPrefix?: string;
 	controllers: __Core_Controller[];
 	middlewares?: __Core_Middleware[];
 	floatingRoutes?: __Core_Route[];
@@ -47,7 +45,6 @@ export class __Core_Server {
 
 	constructor(readonly options: __Core_ServerOptions) {
 		this.db = options.db;
-		this.globalPrefix = options.globalPrefix;
 		this.controllers = options.controllers;
 		this.middlewares = options.middlewares;
 		this.floatingRoutes = options.floatingRoutes;
@@ -138,9 +135,6 @@ export class __Core_Server {
 	private findMatchingRoute(req: __Core_Request): __Core_Route | undefined {
 		const url = new URL(req.url);
 		let path = url.pathname;
-		if (this.globalPrefix !== undefined) {
-			path = path.replace(this.globalPrefix, "");
-		}
 		return this.routes
 			.values()
 			.find((route) => path.match(route.pattern) && TXT.equals(req.method, route.method, "upper"));

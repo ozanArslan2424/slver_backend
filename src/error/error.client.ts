@@ -61,7 +61,7 @@ export class ErrorClient {
 
 		const t = await this.languageClient.makeTranslator("error");
 		const message = t(key);
-		if (status >= 500) {
+		if (status !== Core.Status.UNAUTHORIZED) {
 			this.logger.error(`[${err.name}] ${message}`, err);
 		}
 

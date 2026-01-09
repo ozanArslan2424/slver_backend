@@ -16,7 +16,8 @@ export class GroupController extends Core.Controller {
 	get = this.route(
 		{ method: "GET", path: "/:id" },
 		async (c) => {
-			return await this.groupService.get(c.headers, c.params.id);
+			const id = parseInt(c.params.id);
+			return await this.groupService.get(c.headers, id);
 		},
 		{ params: GroupGetParamsSchema, response: GroupEntitySchema },
 	);
@@ -42,7 +43,8 @@ export class GroupController extends Core.Controller {
 		{ method: "POST", path: "/:id/update" },
 		async (c) => {
 			const body = await c.body();
-			return await this.groupService.update(c.headers, c.params.id, body);
+			const id = parseInt(c.params.id);
+			return await this.groupService.update(c.headers, id, body);
 		},
 		{ params: GroupGetParamsSchema, body: GroupCreateBodySchema, response: GroupEntitySchema },
 	);
@@ -51,7 +53,8 @@ export class GroupController extends Core.Controller {
 		{ method: "POST", path: "/:id/invite" },
 		async (c) => {
 			const body = await c.body();
-			await this.groupService.invite(c.headers, c.params.id, body);
+			const id = parseInt(c.params.id);
+			await this.groupService.invite(c.headers, id, body);
 		},
 		{ params: GroupGetParamsSchema, body: GroupInviteBodySchema },
 	);
@@ -60,7 +63,8 @@ export class GroupController extends Core.Controller {
 		{ method: "POST", path: "/:id/join" },
 		async (c) => {
 			const body = await c.body();
-			await this.groupService.join(c.headers, c.params.id, body);
+			const id = parseInt(c.params.id);
+			await this.groupService.join(c.headers, id, body);
 		},
 		{ params: GroupGetParamsSchema, body: GroupJoinBodySchema },
 	);

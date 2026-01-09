@@ -6,13 +6,7 @@ import { type __Core_RouteSchemas } from "@/lib/core/route";
 import { __Core_Status } from "@/lib/core/status";
 import { Obj } from "@/lib/obj.namespace";
 
-export class __Core_Context<
-	D = void,
-	R extends unknown = unknown,
-	B extends unknown = unknown,
-	S extends unknown = unknown,
-	P extends unknown = unknown,
-> {
+export class __Core_Context<D = void, R = unknown, B = unknown, S = unknown, P = unknown> {
 	req: __Core_Request;
 	status: __Core_Status;
 	statusText: string;
@@ -40,10 +34,7 @@ export class __Core_Context<
 		this.cookies = new __Core_Cookies();
 	}
 
-	private async parseBody<B extends unknown = unknown>(
-		req: __Core_Request,
-		schema?: __Core_SchemaType<B>,
-	): Promise<B> {
+	private async parseBody<B>(req: __Core_Request, schema?: __Core_SchemaType<B>): Promise<B> {
 		const empty = {} as B;
 
 		if (!["POST", "PUT", "PATCH"].includes(req.method.toUpperCase())) {
@@ -52,7 +43,7 @@ export class __Core_Context<
 		try {
 			let body = await req.json();
 			if (schema) {
-				body = __Core_parse(body, schema, "unprocessable.body");
+				body = __Core_parse<B>(body, schema, "unprocessable.body");
 			}
 			return body;
 		} catch (err) {
@@ -61,23 +52,21 @@ export class __Core_Context<
 		}
 	}
 
-	private parseSearch<S extends unknown = unknown>(url: URL, schema?: __Core_SchemaType<S>): S {
+	private parseSearch<S>(url: URL, schema?: __Core_SchemaType<S>): S {
 		let search = Obj.from(url.searchParams) as S;
 		if (schema) {
-			search = __Core_parse(search, schema, "unprocessable.searchParams");
+			search = __Core_parse<S>(search, schema, "unprocessable.searchParams");
 		}
 		return search;
 	}
 
-	private parseParams<P extends unknown = unknown>(
-		path: string,
-		url: URL,
-		schema?: __Core_SchemaType<P>,
-	): P {
+	private parseParams<P>(path: string, url: URL, schema?: __Core_SchemaType<P>): P {
 		const reqPath = url.pathname;
 
 		const pathSegments = path.split("/");
 		const reqSegments = reqPath.split("/");
+
+		console.log({ pathSegments, reqSegments });
 
 		const paramsObj: Record<string, string> = {};
 
@@ -91,7 +80,7 @@ export class __Core_Context<
 		let params = Obj.from(paramsObj) as P;
 
 		if (schema) {
-			params = __Core_parse(params, schema, "unprocessable.params");
+			params = __Core_parse<P>(params, schema, "unprocessable.params");
 		}
 
 		return params;

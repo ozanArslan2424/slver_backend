@@ -1,8 +1,7 @@
 import type { TransactionClient } from "@/db/database.schema";
 import type { DatabaseClient } from "@/db/database.client";
-import type { VerificationTokenOperations } from "@/verification-token/verification-token.operations";
 
-export class VerificationTokenRepository implements VerificationTokenOperations {
+export class VerificationTokenRepository {
 	constructor(private readonly db: DatabaseClient) {}
 
 	async delete(userId: string, value: string, tx?: TransactionClient) {

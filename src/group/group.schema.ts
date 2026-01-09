@@ -8,7 +8,9 @@ export const GroupEntitySchema = type({
 	title: "string",
 });
 
-export const GroupGetParamsSchema = GroupEntitySchema.pick("id");
+export const GroupGetParamsSchema = type({
+	id: "string.integer",
+});
 
 export const GroupCreateBodySchema = GroupEntitySchema.pick("title");
 

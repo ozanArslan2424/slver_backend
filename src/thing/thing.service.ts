@@ -2,7 +2,6 @@ import type {
 	ThingAssignBodySchema,
 	ThingCreateBodySchema,
 	ThingDoneBodySchema,
-	ThingListSearchSchema,
 	ThingUpdateBodySchema,
 } from "@/thing/thing.schema";
 import { Core } from "@/lib/core.namespace";
@@ -67,16 +66,11 @@ export class ThingService extends Core.Service {
 		return await this.thingRepository.update(thingId, content, dueDate, null, null, null);
 	}
 
-	async list(headers: Core.Headers, search: Core.InferSchema<typeof ThingListSearchSchema>) {
+	async list(headers: Core.Headers, groupId: number | null) {
 		return await this.db.$transaction(async (tx) => {
 			const profile = await this.authService.getProfile(headers, tx);
 
-			const list = await this.thingRepository.findMany(
-				profile.id,
-				search.groupId ?? null,
-				search.isDone ?? null,
-				tx,
-			);
+			const list = await this.thingRepository.findMany(profile.id, groupId, tx);
 
 			await this.seenStatusRepository.updateMany(
 				profile.id,

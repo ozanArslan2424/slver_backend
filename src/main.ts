@@ -10,7 +10,9 @@ import { Config } from "@/lib/config.namespace";
 import { Core } from "@/lib/core.namespace";
 import { Help } from "@/lib/help.namespace";
 import { MailClient } from "@/mail/mail.client";
+import { MembershipController } from "@/membership/membership.controller";
 import { MembershipRepository } from "@/membership/membership.repository";
+import { MembershipService } from "@/membership/membership.service";
 import { PersonRepository } from "@/person/person.repository";
 import { RateLimitClient } from "@/rate-limit/rate-limit.client";
 import { RefreshTokenRepository } from "@/refresh-token/refresh-token.repository";
@@ -23,6 +25,7 @@ import { VerificationTokenRepository } from "@/verification-token/verification-t
 
 async function main() {
 	Core.setRuntime("bun");
+	Core.setGlobalPrefix("/api");
 
 	const db = new DatabaseClient();
 	const languageClient = new LanguageClient();
@@ -62,14 +65,15 @@ async function main() {
 		membershipRepository,
 		seenStatusRepository,
 	);
+	const membershipService = new MembershipService(db, authService, membershipRepository);
 
 	const server = new Core.Server({
 		db,
-		globalPrefix: "/api",
 		controllers: [
 			new AuthController(authService),
 			new ThingController(thingService),
 			new GroupController(groupService),
+			new MembershipController(membershipService),
 		],
 		middlewares: [
 			new Core.Middleware((c) => {

@@ -1,9 +1,8 @@
 import type { TransactionClient } from "@/db/database.schema";
 import type { DatabaseClient } from "@/db/database.client";
 import type { Prisma } from "prisma/generated/client";
-import type { ThingOperations } from "@/thing/thing.operations";
 
-export class ThingRepository implements ThingOperations {
+export class ThingRepository {
 	constructor(private readonly db: DatabaseClient) {}
 
 	include = { assignedTo: true } as const;
@@ -65,22 +64,13 @@ export class ThingRepository implements ThingOperations {
 		});
 	}
 
-	async findMany(
-		createdById: number,
-		groupId: number | null,
-		isDone: boolean | null,
-		tx?: TransactionClient,
-	) {
+	async findMany(createdById: number, groupId: number | null, tx?: TransactionClient) {
 		let where: Prisma.ThingFindManyArgs["where"] = {
 			groupId,
 		};
 
 		if (groupId === null) {
 			where.createdById = createdById;
-		}
-
-		if (isDone !== null) {
-			where.isDone = isDone;
 		}
 
 		const client = tx ?? this.db;

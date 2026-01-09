@@ -5,6 +5,7 @@ import { __Core_Cookies } from "@/lib/core/cookies";
 import { __Core_Cors } from "@/lib/core/cors";
 import { type __Core_DBClientInterface } from "@/lib/core/db-client";
 import { __Core_Error } from "@/lib/core/error";
+import { __Core_setGlobalPrefix } from "@/lib/core/global-prefix";
 import { __Core_Headers } from "@/lib/core/headers";
 import { type __Core_Logger } from "@/lib/core/logger";
 import { __Core_Method } from "@/lib/core/method";
@@ -24,6 +25,8 @@ export namespace Core {
 	 * Some features are only available in "bun".
 	 * */
 	export const setRuntime = __Core_setRuntime;
+
+	export const setGlobalPrefix = __Core_setGlobalPrefix;
 
 	/**
 	 * Core.Request includes a cookie jar, better headers, and some utilities.

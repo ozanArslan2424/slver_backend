@@ -8,3 +8,7 @@ export const MembershipEntitySchema = type({
 	personId: "number",
 	groupId: "number",
 });
+
+export const MembershipListParamsSchema = type({
+	groupId: "string.integer",
+});

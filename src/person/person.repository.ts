@@ -1,9 +1,8 @@
 import type { TransactionClient } from "@/db/database.schema";
 import type { DatabaseClient } from "@/db/database.client";
 import { Status } from "prisma/generated/enums";
-import type { PersonOperations } from "@/person/person.operations";
 
-export class PersonRepository implements PersonOperations {
+export class PersonRepository {
 	constructor(private readonly db: DatabaseClient) {}
 
 	include = { memberships: { include: { group: true }, omit: { password: true } } } as const;

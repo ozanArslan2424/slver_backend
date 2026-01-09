@@ -1,9 +1,8 @@
 import type { TransactionClient } from "@/db/database.schema";
 import type { DatabaseClient } from "@/db/database.client";
 import type { Prisma } from "prisma/generated/client";
-import type { UserOperations } from "@/user/user.operations";
 
-export class UserRepository implements UserOperations {
+export class UserRepository {
 	constructor(private readonly db: DatabaseClient) {}
 
 	async findByIdWithProfile(id: string, tx?: TransactionClient) {

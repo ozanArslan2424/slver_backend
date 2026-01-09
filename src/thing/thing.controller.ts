@@ -18,7 +18,8 @@ export class ThingController extends Core.Controller {
 	list = this.route(
 		{ method: "GET", path: "/" },
 		async (c) => {
-			return await this.thingService.list(c.headers, c.search);
+			const groupId = c.search.groupId ? parseInt(c.search.groupId) : null;
+			return await this.thingService.list(c.headers, groupId);
 		},
 		{ search: ThingListSearchSchema, response: ThingDataSchema.array() },
 	);
@@ -36,7 +37,8 @@ export class ThingController extends Core.Controller {
 		{ method: "POST", path: "/:id/update" },
 		async (c) => {
 			const body = await c.body();
-			return await this.thingService.update(c.headers, c.params.id, body);
+			const id = parseInt(c.params.id);
+			return await this.thingService.update(c.headers, id, body);
 		},
 		{ params: ThingGetParamsSchema, body: ThingUpdateBodySchema, response: ThingDataSchema },
 	);
@@ -44,7 +46,8 @@ export class ThingController extends Core.Controller {
 	remove = this.route(
 		{ method: "POST", path: "/:id/remove" },
 		async (c) => {
-			return await this.thingService.remove(c.headers, c.params.id);
+			const id = parseInt(c.params.id);
+			return await this.thingService.remove(c.headers, id);
 		},
 		{ params: ThingGetParamsSchema },
 	);
@@ -53,7 +56,8 @@ export class ThingController extends Core.Controller {
 		{ method: "POST", path: "/:id/assign" },
 		async (c) => {
 			const body = await c.body();
-			return await this.thingService.assign(c.headers, c.params.id, body);
+			const id = parseInt(c.params.id);
+			return await this.thingService.assign(c.headers, id, body);
 		},
 		{ params: ThingGetParamsSchema, body: ThingAssignBodySchema, response: ThingDataSchema },
 	);
@@ -62,7 +66,8 @@ export class ThingController extends Core.Controller {
 		{ method: "POST", path: "/:id/done" },
 		async (c) => {
 			const body = await c.body();
-			return await this.thingService.done(c.headers, c.params.id, body);
+			const id = parseInt(c.params.id);
+			return await this.thingService.done(c.headers, id, body);
 		},
 		{ params: ThingGetParamsSchema, body: ThingDoneBodySchema, response: ThingDataSchema },
 	);

@@ -1,9 +1,8 @@
 import type { TransactionClient } from "@/db/database.schema";
 import type { DatabaseClient } from "@/db/database.client";
 import type { JwtPayload } from "jsonwebtoken";
-import type { RefreshTokenOperations } from "@/refresh-token/refresh-token.operations";
 
-export class RefreshTokenRepository implements RefreshTokenOperations {
+export class RefreshTokenRepository {
 	constructor(private readonly db: DatabaseClient) {}
 
 	async deleteExpiredTokens(tx?: TransactionClient) {

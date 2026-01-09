@@ -1,8 +1,7 @@
 import type { TransactionClient } from "@/db/database.schema";
 import type { DatabaseClient } from "@/db/database.client";
-import type { SeenStatusOperations } from "@/seen-status/seen-status.operations";
 
-export class SeenStatusRepository implements SeenStatusOperations {
+export class SeenStatusRepository {
 	constructor(private readonly db: DatabaseClient) {}
 
 	async findManyUnseen(personId: number, tx?: TransactionClient) {

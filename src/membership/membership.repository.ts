@@ -1,13 +1,33 @@
 import type { TransactionClient } from "@/db/database.schema";
 import type { DatabaseClient } from "@/db/database.client";
 import { PersonRole, Status } from "prisma/generated/enums";
-import type { MembershipOperations } from "@/membership/membership.operations";
 import type { Prisma } from "prisma/generated/browser";
 
-export class MembershipRepository implements MembershipOperations {
+export class MembershipRepository {
 	constructor(private readonly db: DatabaseClient) {}
 
-	include: { group: true } = { group: true };
+	include: { group: true; person: true } = { group: true, person: true };
+
+	async findMany(personId: number, groupId: number, tx?: TransactionClient) {
+		const client = tx ?? this.db;
+
+		const isMember = await client.membership.findFirst({
+			where: {
+				personId,
+				groupId,
+				status: Status.accepted,
+			},
+		});
+
+		if (!isMember) return null;
+
+		const memberships = await client.membership.findMany({
+			where: { groupId },
+			include: { person: true },
+		});
+
+		return memberships;
+	}
 
 	async findUnique(
 		personId: number,

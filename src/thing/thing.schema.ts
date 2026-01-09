@@ -1,4 +1,4 @@
-import { PersonSchema } from "@/person/person.schema";
+import { PersonEntitySchema } from "@/person/person.schema";
 import { type } from "arktype";
 
 export const ThingEntitySchema = type({
@@ -14,12 +14,20 @@ export const ThingEntitySchema = type({
 	groupId: "number | null",
 });
 
-export const ThingGetParamsSchema = ThingEntitySchema.pick("id");
+// TODO: There must be a way to infer the out type from .pipe
+// but right now it breaks the entire parsing system
+export const ThingGetParamsSchema = type({
+	id: "string.integer",
+});
 
-export const ThingListSearchSchema = ThingEntitySchema.pick("groupId", "isDone").partial();
+// TODO: There must be a way to infer the out type from .pipe
+// but right now it breaks the entire parsing system
+export const ThingListSearchSchema = type({
+	groupId: "string.integer",
+});
 
 export const ThingDataSchema = ThingEntitySchema.and({
-	assignedTo: type.or(PersonSchema, "null"),
+	assignedTo: type.or(PersonEntitySchema, "null"),
 });
 
 export const ThingCreateBodySchema = type({
