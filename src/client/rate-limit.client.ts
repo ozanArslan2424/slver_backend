@@ -1,8 +1,8 @@
 import { Core } from "@/lib/core.namespace";
 import { Encrypt } from "@/lib/encrypt.namespace";
 import { TXT } from "@/lib/txt.namespace";
-import { Logger } from "@/logger/logger";
-import type { RateLimitEntry } from "@/rate-limit/rate-limit.schema";
+import { Logger } from "@/client/logger";
+import type { RateLimitEntry } from "@/client/rate-limit.schema";
 
 export class RateLimitClient {
 	private readonly logger = new Logger();

@@ -1,8 +1,8 @@
-import { Logger } from "@/logger/logger";
+import { Logger } from "@/client/logger";
 import nodemailer from "nodemailer";
-import type { LanguageClient } from "@/language/language.client";
+import type { LanguageClient } from "@/client/language.client";
 import { Config } from "@/lib/config.namespace";
-import type { Translator } from "@/language/language.schema";
+import type { Translator, TranslatorCollectionKey } from "@/client/language.schema";
 import path from "path";
 
 export class MailClient {
@@ -45,7 +45,7 @@ export class MailClient {
 	}
 
 	async loadTemplate(filename: string, variables: Record<string, string> = {}) {
-		const pathname = path.join(process.cwd(), "src", "mail", "templates", filename);
+		const pathname = path.join(process.cwd(), "src", "client", "mail", filename);
 		let template = await Bun.file(pathname).text();
 		Object.keys(variables).forEach((key) => {
 			template = template.replace(new RegExp(`{{${key}}}`, "g"), variables[key]!);
@@ -64,13 +64,13 @@ export class MailClient {
 	}: {
 		toEmail: string;
 		toName: string;
-		translator: string;
+		translator: TranslatorCollectionKey;
 		htmlTemplateName?: string;
 		textTemplateName: string;
 		subject: (t: Translator) => string;
 		variables: (t: Translator) => Record<string, string>;
 	}) {
-		const t = await this.languageClient.makeTranslator(translator);
+		const t = this.languageClient.makeTranslator(translator);
 		const html = htmlTemplateName ? await this.loadTemplate(htmlTemplateName, variables(t)) : "";
 		const text = await this.loadTemplate(textTemplateName, variables(t));
 

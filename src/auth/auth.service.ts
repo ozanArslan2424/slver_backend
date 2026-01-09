@@ -1,15 +1,17 @@
 import type { LoginData, RefreshData, RegisterData, VerifyData } from "@/auth/auth.schema";
-import type { RefreshTokenRepository } from "@/refresh-token/refresh-token.repository";
-import type { UserRepository } from "@/user/user.repository";
-import type { VerificationTokenRepository } from "@/verification-token/verification-token.repository";
-import type { TransactionClient } from "@/db/database.schema";
-import type { DatabaseClient } from "@/db/database.client";
+import type { RefreshTokenRepository } from "@/auth/refresh-token.repository";
+import type { UserRepository } from "@/auth/user.repository";
+import type { VerificationTokenRepository } from "@/auth/verification-token.repository";
+import type { TransactionClient } from "@/client/database.schema";
+import type { DatabaseClient } from "@/client/database.client";
 import { Config } from "@/lib/config.namespace";
 import { Core } from "@/lib/core.namespace";
 import { Encrypt } from "@/lib/encrypt.namespace";
 import { Help } from "@/lib/help.namespace";
-import type { MailClient } from "@/mail/mail.client";
+import type { MailClient } from "@/client/mail.client";
 import type { PersonRepository } from "@/person/person.repository";
+import type { GroupRepository } from "@/group/group.repository";
+import type { LanguageClient } from "@/client/language.client";
 
 export class AuthService extends Core.Service {
 	readonly jwtRefreshSecret = Config.get("JWT_REFRESH_SECRET");
@@ -22,7 +24,9 @@ export class AuthService extends Core.Service {
 		private readonly refreshTokenRepository: RefreshTokenRepository,
 		private readonly verificationTokenRepository: VerificationTokenRepository,
 		private readonly personRepository: PersonRepository,
+		private readonly groupRepository: GroupRepository,
 		private readonly mailClient: MailClient,
+		private readonly languageClient: LanguageClient,
 	) {
 		super();
 	}
@@ -115,7 +119,7 @@ export class AuthService extends Core.Service {
 	async verify(body: VerifyData) {
 		const response = await this.db.$transaction(async (tx) => {
 			const email = body.email;
-			const value = body.code;
+			const otpCode = body.code;
 
 			const user = await this.userRepository.findByEmail(email, tx);
 			if (!user) {
@@ -123,20 +127,25 @@ export class AuthService extends Core.Service {
 			}
 			const userId = user.id;
 
-			const verification = await this.verificationTokenRepository.findUnique(userId, value, tx);
+			const verification = await this.verificationTokenRepository.findUnique(userId, otpCode, tx);
 
 			if (!verification) {
 				return null;
 			}
 
 			if (verification.expiresAt.getTime() < Date.now()) {
-				await this.verificationTokenRepository.delete(userId, value, tx);
+				await this.verificationTokenRepository.delete(userId, otpCode, tx);
 				return null;
 			}
 
-			await this.verificationTokenRepository.delete(userId, value, tx);
+			await this.verificationTokenRepository.delete(userId, otpCode, tx);
 			await this.userRepository.update(userId, null, null, true, tx);
 			const profile = await this.personRepository.findByEmailOrCreate(email, userId, tx);
+			await this.groupRepository.create(
+				this.languageClient.translate("group", "personal.title", { name: profile.name }),
+				otpCode,
+				profile.id,
+			);
 
 			const refreshToken = await this.signRefreshToken(user.id);
 			const accessToken = this.signAccessToken(profile.userId);

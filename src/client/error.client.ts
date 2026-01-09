@@ -1,6 +1,6 @@
-import type { LanguageClient } from "@/language/language.client";
+import type { LanguageClient } from "@/client/language.client";
 import { Core } from "@/lib/core.namespace";
-import { Logger } from "@/logger/logger";
+import { Logger } from "@/client/logger";
 import { Prisma } from "prisma/generated/client";
 
 export class ErrorClient {
@@ -59,8 +59,7 @@ export class ErrorClient {
 				break;
 		}
 
-		const t = await this.languageClient.makeTranslator("error");
-		const message = t(key);
+		const message = this.languageClient.translate("error", key);
 		if (status !== Core.Status.UNAUTHORIZED) {
 			this.logger.error(`[${err.name}] ${message}`, err);
 		}

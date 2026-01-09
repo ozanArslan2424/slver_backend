@@ -5,7 +5,7 @@ import type {
 	ThingUpdateBodySchema,
 } from "@/thing/thing.schema";
 import { Core } from "@/lib/core.namespace";
-import type { DatabaseClient } from "@/db/database.client";
+import type { DatabaseClient } from "@/client/database.client";
 import type { AuthService } from "@/auth/auth.service";
 import { Status } from "prisma/generated/enums";
 import type { SeenStatusRepository } from "@/seen-status/seen-status.repository";

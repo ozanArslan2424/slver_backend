@@ -1,5 +1,5 @@
 import type { AuthService } from "@/auth/auth.service";
-import type { DatabaseClient } from "@/db/database.client";
+import type { DatabaseClient } from "@/client/database.client";
 import { Core } from "@/lib/core.namespace";
 import type { MembershipRepository } from "@/membership/membership.repository";
 

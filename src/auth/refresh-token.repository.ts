@@ -1,5 +1,5 @@
-import type { TransactionClient } from "@/db/database.schema";
-import type { DatabaseClient } from "@/db/database.client";
+import type { TransactionClient } from "@/client/database.schema";
+import type { DatabaseClient } from "@/client/database.client";
 import type { JwtPayload } from "jsonwebtoken";
 
 export class RefreshTokenRepository {

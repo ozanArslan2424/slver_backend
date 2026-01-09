@@ -1,17 +1,31 @@
-import { Config } from "@/lib/config.namespace";
 import type { Core } from "@/lib/core.namespace";
 import { Help } from "@/lib/help.namespace";
-import { Logger } from "@/logger/logger";
-import { PrismaNeon } from "@prisma/adapter-neon";
+import { Logger } from "@/client/logger";
 import { PrismaClient } from "prisma/generated/client";
+import { Config } from "@/lib/config.namespace";
+import { PrismaLibSql } from "@prisma/adapter-libsql";
+import { PrismaNeon } from "@prisma/adapter-neon";
+import { PrismaPg } from "@prisma/adapter-pg";
 
 export class DatabaseClient extends PrismaClient implements Core.DBClientInterface {
 	private readonly logger = new Logger();
 
-	constructor() {
-		const connectionString = Config.get("DATABASE_URL");
-		const adapter = new PrismaNeon({ connectionString });
-		super({ adapter });
+	constructor(type: "sqlite" | "neon" | "pg") {
+		super({ adapter: DatabaseClient.getDatabaseAdapter(type) });
+	}
+
+	static getDatabaseAdapter(type: "sqlite" | "neon" | "pg") {
+		const url = Config.get("DATABASE_URL");
+		switch (type) {
+			case "sqlite":
+				return new PrismaLibSql({ url });
+			case "neon":
+				return new PrismaNeon({ connectionString: url });
+			case "pg":
+				return new PrismaPg({ connectionString: url });
+			default:
+				throw new Error("Unsupported database adapter.");
+		}
 	}
 
 	async connect(): Promise<void> {

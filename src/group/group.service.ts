@@ -10,12 +10,12 @@ import { Config } from "@/lib/config.namespace";
 import { Core } from "@/lib/core.namespace";
 import { Encrypt } from "@/lib/encrypt.namespace";
 import { Help } from "@/lib/help.namespace";
-import type { MailClient } from "@/mail/mail.client";
+import type { MailClient } from "@/client/mail.client";
 import type { PersonRepository } from "@/person/person.repository";
 import { PersonRole, Status } from "prisma/generated/enums";
 import type { MembershipEntitySchema } from "@/membership/membership.schema";
 import type { ProfileSchema } from "@/auth/auth.schema";
-import type { DatabaseClient } from "@/db/database.client";
+import type { DatabaseClient } from "@/client/database.client";
 
 export class GroupService extends Core.Service {
 	constructor(

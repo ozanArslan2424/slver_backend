@@ -1,5 +1,5 @@
-import type { TransactionClient } from "@/db/database.schema";
-import type { DatabaseClient } from "@/db/database.client";
+import type { TransactionClient } from "@/client/database.schema";
+import type { DatabaseClient } from "@/client/database.client";
 import type { Prisma } from "prisma/generated/client";
 
 export class ThingRepository {

@@ -1,7 +1,7 @@
 import { type __Core_DBClientInterface } from "@/lib/core/db-client";
 import { type __Core_ServeOptions } from "@/lib/core/serve-options";
 import { __Core_Request } from "./request";
-import { Logger } from "@/logger/logger";
+import { Logger } from "@/client/logger";
 import { __Core_getRuntime } from "@/lib/core/runtime/get-runtime";
 import { __Core_serve } from "@/lib/core/runtime/serve";
 import { __Core_Controller } from "@/lib/core/controller";
